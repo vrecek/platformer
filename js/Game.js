@@ -20,8 +20,17 @@ class Game {
         window.requestAnimationFrame(refresh);
     }
     // Returns the CTX
-    get getCtx() {
+    getCtx() {
         return this.ctx;
+    }
+    // Returns the ctx stats
+    getCanvasStats() {
+        return {
+            x: 0,
+            y: 0,
+            w: this.canvas.width,
+            h: this.canvas.height
+        };
     }
 }
 export default Game;

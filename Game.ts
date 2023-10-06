@@ -1,3 +1,4 @@
+import { EntityStats } from "./interfaces/EntityTypes"
 import { VoidFn } from "./interfaces/GameTypes"
 
 
@@ -34,8 +35,19 @@ class Game {
 
 
     // Returns the CTX
-    public get getCtx(): CanvasRenderingContext2D {
+    public getCtx(): CanvasRenderingContext2D {
         return this.ctx
+    }
+
+
+    // Returns the ctx stats
+    public getCanvasStats(): EntityStats {
+        return {
+            x: 0,
+            y: 0,
+            w: this.canvas.width,
+            h: this.canvas.height
+        }
     }
 }
 

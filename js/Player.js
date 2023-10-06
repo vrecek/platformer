@@ -18,15 +18,49 @@ class Player extends Entity {
             const { x, y, w, h } = ent.getStats();
             if (((this.x + this.w >= x) && (this.y + this.h >= y)) &&
                 ((this.x <= x + w) && (this.y <= y + h))) {
-                collidedFn ? collidedFn() : null;
+                collidedFn ? collidedFn(ent) : null;
+                return true;
             }
-            else
-                uncollidedFn ? uncollidedFn() : null;
+            else {
+                uncollidedFn ? uncollidedFn(ent) : null;
+            }
         }
+        return false;
     }
-    // Handle the W,A,S,D movement
-    handleMoveKeys() {
-        if (!this.keys.pressed || !this.movementStatus)
+    // Handle canvas collision
+    handleCanvasCollision(blockedKeys, canvas) {
+        if (!this.y)
+            blockedKeys.push('w');
+        if (!this.x)
+            blockedKeys.push('a');
+        if (this.y + this.h === canvas.h)
+            blockedKeys.push('s');
+        if (this.x + this.w === canvas.w)
+            blockedKeys.push('d');
+    }
+    // If collided, returns the (movement) key, which caused the collision
+    getCollisionStopKey(e) {
+        let k = undefined;
+        if (e.y + e.h === this.y)
+            k = 'w';
+        else if (e.x + e.w === this.x)
+            k = 'a';
+        else if (e.y === this.y + this.h)
+            k = 's';
+        else if (this.x + this.w === e.x)
+            k = 'd';
+        return k;
+    }
+    // Changes the player position
+    setPlayerPos(newX, newY) {
+        this.x = newX;
+        this.y = newY;
+    }
+    // Handle the standard W,A,S,D movement (Move in all directions, no jumping)
+    handleStandardMoveKeys(stopKey) {
+        if (!this.keys.pressed ||
+            !this.movementStatus ||
+            (stopKey?.length && stopKey.some(x => this.keys.pressedKeys.includes(x))))
             return;
         if (this.keys.pressedKeys.includes('w'))
             this.y -= this.speed;
@@ -54,11 +88,24 @@ class Player extends Entity {
     }
     // Toggle or change the player movement
     changePlayerMovementStatus(val) {
-        this.movementStatus = val ? val : !this.movementStatus;
+        this.movementStatus = typeof val !== 'undefined'
+            ? val
+            : !this.movementStatus;
     }
     // Get the movement status
-    get getMovementStatus() {
+    getMovementStatus() {
         return this.movementStatus;
+    }
+    // Get the pressed keys
+    getKeys() {
+        return this.keys.pressedKeys;
+    }
+    // Get the player position
+    getPlayerPosition() {
+        return {
+            x: this.x,
+            y: this.y
+        };
     }
 }
 export default Player;
