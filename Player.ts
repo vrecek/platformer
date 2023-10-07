@@ -4,25 +4,100 @@ import { KeysInput } from "./interfaces/GameTypes.js";
 import { MoveKeys, PlayerPos } from "./interfaces/PlayerTypes.js";
 
 
+const INIT_VEL: number = 5
+const FINISH_VEL: number = INIT_VEL / 10
+const COLL_PADDING: number = .5
+
+
 class Player extends Entity {
     private keys: KeysInput
-    private speed: number
     private movementStatus: boolean
+    private speedx: number
+    private blockedKeys: MoveKeys[]
+
+    private isJumping: boolean
+    private isFalling: boolean
+
+    private friction: number
+    private initVelocity: number
+    private finishVelocity: number
+
 
     public constructor(x: number, y: number, w: number, h: number, speed: number, ctx: CanvasRenderingContext2D) {
         super(x, y, w, h, ctx)
 
+        this.isJumping = false
+        this.isFalling = false
+        this.initVelocity = INIT_VEL 
+        this.finishVelocity = FINISH_VEL
+        this.friction = .95
+
+        this.blockedKeys = []
         this.movementStatus = true
-        this.speed = speed
+        this.speedx = speed
         this.keys = {
             pressed: false,
             pressedKeys: []
         }
     }
 
+    private handleJumping(): void {
+        if (this.keys.pressedKeys.includes('w') && !this.isJumping) {
+            this.isJumping = true
+        }
+        if (!this.isJumping || !this.movementStatus) return
+
+
+        if (this.initVelocity <= FINISH_VEL) {
+            this.isJumping = false
+            this.isFalling = true
+        }
+
+        // Jumps up
+        if (this.isJumping) {
+            this.initVelocity *= this.friction
+            this.y -= this.initVelocity
+        }
+    }
+
+    private resetJumpState(): void {
+        this.isJumping = false
+        this.isFalling = false
+        this.initVelocity = INIT_VEL
+        this.finishVelocity = FINISH_VEL
+    }
+
+    private checkMovementCondition(): boolean {
+        if (
+            !this.keys.pressed ||
+            !this.movementStatus ||
+            (this.blockedKeys?.length && this.blockedKeys.some(x => this.keys.pressedKeys.includes(x)))
+        )
+            return true
+
+
+        return false
+    }
+
+
+    // Handles the gravity (jumping up and down from an entity)
+    public handleGravity(entColl: boolean, canvasColl: boolean): void {
+        if (entColl || canvasColl || this.isJumping) {
+            if (!this.isJumping) {
+                this.resetJumpState()
+            }
+
+            return
+        }
+
+
+        this.finishVelocity *= ((1 % this.friction) + 1)
+        this.y += this.finishVelocity
+    }
+
 
     // Detects the collision of the player
-    public checkCollision(entities: Entity[], collidedFn?: CollisionCb, uncollidedFn?: CollisionCb): boolean {
+    public checkCollision(entities: Entity[], collidedFn?: CollisionCb, uncollidedFn?: CollisionCb): Entity | null {
         for (const ent of entities) {
             const { x, y, w, h } = ent.getStats()
 
@@ -32,50 +107,77 @@ class Player extends Entity {
             ) {
                 collidedFn ? collidedFn(ent) : null
 
-                return true
+                return ent
             }
             else {
                 uncollidedFn ? uncollidedFn(ent) : null
             }
         }
 
+        return null
+    }
+
+
+    // Check if the canvas is collided
+    public isCanvasCollided(canvas: EntityStats): boolean {
+        const plrYHeight: number = this.y + this.h
+
+        if (!this.y || !this.x || plrYHeight >= canvas.h || this.x + this.w === canvas.w)
+            return true
+
         return false
     }
 
 
     // Handle canvas collision
-    public handleCanvasCollision(blockedKeys: MoveKeys[], canvas: EntityStats): void {
+    public handleCanvasCollision(canvas: EntityStats): void {
+        const plrYHeight: number = this.y + this.h
+
+
         if (!this.y)
-            blockedKeys.push('w')
+            this.blockedKeys.push('w')
 
         if (!this.x)
-            blockedKeys.push('a')
+            this.blockedKeys.push('a')
 
-        if (this.y + this.h === canvas.h)
-            blockedKeys.push('s')
+        if (plrYHeight >= canvas.h) {
+            this.y = canvas.h - this.h // - COLL_PADDING
+            this.blockedKeys.push('s')
+        }
 
         if (this.x + this.w === canvas.w)
-            blockedKeys.push('d')
+            this.blockedKeys.push('d')
     }
 
 
-    // If collided, returns the (movement) key, which caused the collision
-    public getCollisionStopKey(e: EntityStats): MoveKeys | undefined {
-        let k: MoveKeys | undefined = undefined
+    // Stops the movement when the player collides with an entity
+    public stopCollisionMovement(ent: Entity): void {
+        const e: EntityStats = ent.getStats(),
+              plrYHeight: number = this.y + this.h
 
+
+        // If the player is falling down to an object
+        if (this.isFalling && plrYHeight >= e.y) {
+            this.resetJumpState()
+            this.y = e.y - e.h // - COLL_PADDING
+        }
+
+        // If the player jump-touches an object from the ground
+        if (e.y + e.h <= this.y + 10) {
+            this.isJumping = false
+            this.y = e.y + e.h + COLL_PADDING
+        }
+
+        // Stop moving towards the collided object
         if (e.y + e.h === this.y)
-            k = 'w'
+            this.blockedKeys.push('w')
         else if (e.x + e.w === this.x)
-            k = 'a'
-        else if (e.y === this.y + this.h)
-            k = 's'
+            this.blockedKeys.push('a')
+        else if (e.y === plrYHeight) 
+            this.blockedKeys.push('s')
         else if (this.x + this.w === e.x)
-            k = 'd'
-
-
-        return k
+            this.blockedKeys.push('d')
     }
-
 
 
     // Changes the player position
@@ -86,26 +188,39 @@ class Player extends Entity {
 
 
     // Handle the standard W,A,S,D movement (Move in all directions, no jumping)
-    public handleStandardMoveKeys(stopKey?: MoveKeys[]): void {
-        if (
-            !this.keys.pressed ||
-            !this.movementStatus ||
-            (stopKey?.length && stopKey.some(x => this.keys.pressedKeys.includes(x)))
-        )
+    public handleStandardMoveKeys(): void {
+        if (this.checkMovementCondition())
             return
 
 
         if (this.keys.pressedKeys.includes('w'))
-            this.y -= this.speed
+            this.y -= this.speedx
 
         if (this.keys.pressedKeys.includes('a'))
-            this.x -= this.speed
+            this.x -= this.speedx
 
         if (this.keys.pressedKeys.includes('s'))
-            this.y += this.speed
+            this.y += this.speedx
 
         if (this.keys.pressedKeys.includes('d'))
-            this.x += this.speed
+            this.x += this.speedx
+    }
+
+
+    // Handle advanced movement
+    public handleAdvancedMoveKeys(): void {
+        this.handleJumping()
+        
+        if (this.checkMovementCondition())
+            return
+
+
+        if (this.keys.pressedKeys.includes('a'))
+            this.x -= this.speedx
+
+        if (this.keys.pressedKeys.includes('d'))
+            this.x += this.speedx
+
     }
 
 
@@ -138,15 +253,18 @@ class Player extends Entity {
     }
 
 
-    // Get the movement status
-    public getMovementStatus(): boolean {
-        return this.movementStatus
+    // Clears the blocked keys array
+    public resetBlockedKeys(): void {
+        this.blockedKeys = []
     }
 
 
-    // Get the pressed keys
-    public getKeys(): string[] {
-        return this.keys.pressedKeys
+    //-------------------------- GETTERS
+
+
+    // Get the movement status
+    public getMovementStatus(): boolean {
+        return this.movementStatus
     }
 
 

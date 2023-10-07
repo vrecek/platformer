@@ -10,24 +10,24 @@ console.log('start')
 const GAME: Game = new Game(),
       CTX: CanvasRenderingContext2D = GAME.getCtx()
 
-const PLAYER: Player = new Player(0, 0, 40, 40, 2.5, CTX)
+const PLAYER: Player = new Player(0, 560, 40, 40, 2, CTX)
 
 
 const ENEMY_ENTITIES: Entity[] = [
-    new Entity(50, 50, 40, 40, CTX),
-    new Entity(250, 200, 80, 40, CTX),
+    // new Entity(50, 50, 40, 40, CTX),
+    // new Entity(250, 200, 80, 40, CTX),
 
-    new Entity(600, 200, 80, 40, CTX),
-    new Entity(680, 200, 40, 120, CTX),
+    // new Entity(600, 200, 80, 40, CTX),
+    // new Entity(680, 200, 40, 120, CTX),
 ]
 const SURFACE_ENTITIES: Entity[] = [
-    new Entity(400, 200, 80, 40, CTX),
-    new Entity(400, 200, 80, 40, CTX),
-    new Entity(100, 300, 80, 40, CTX)
+    new Entity(100, 300, 80, 40, CTX),
+    new Entity(0, 500, 80, 40, CTX),
+    new Entity(200, 560, 80, 40, CTX)
 ]
 
 
-let blockedKeys: MoveKeys[] = []
+// let blockedKeys: MoveKeys[] = []
 
 
 GAME.setWidth(800, 600)
@@ -42,12 +42,18 @@ GAME.update(() => {
         ent.draw('green')
 
 
-    PLAYER.checkCollision(SURFACE_ENTITIES, collidedWithSurface, resetBlockKey)
+
+    const ent_surfaceCollision: Entity | null = PLAYER.checkCollision(SURFACE_ENTITIES)
+
+    PLAYER.handleAdvancedMoveKeys()
+    PLAYER.handleGravity(
+        !!ent_surfaceCollision,
+        PLAYER.isCanvasCollided(GAME.getCanvasStats())
+    )
+
     PLAYER.checkCollision(ENEMY_ENTITIES, collidedWithEnemy)
-    PLAYER.handleCanvasCollision(blockedKeys, GAME.getCanvasStats())
-
-
-    PLAYER.handleStandardMoveKeys(blockedKeys)        
+    PLAYER.checkCollision(SURFACE_ENTITIES, collidedWithSurface, () => PLAYER.resetBlockedKeys())
+    PLAYER.handleCanvasCollision(GAME.getCanvasStats())
 })
 
 
@@ -57,18 +63,9 @@ PLAYER.initPressKeyEvents()
 // --------------- Funcs ------------------
 
 
-// Resets the array of blocked keys
-const resetBlockKey = (): void => {
-    blockedKeys = []
-}
-
-
 // When collided with a wall/floor
 const collidedWithSurface = (ent: Entity): void => {
-    const key: MoveKeys | undefined = PLAYER.getCollisionStopKey(ent.getStats())
-
-    if (key)
-        blockedKeys.push(key)
+    PLAYER.stopCollisionMovement(ent)
 }
 
 
@@ -76,6 +73,11 @@ const collidedWithSurface = (ent: Entity): void => {
 const collidedWithEnemy = (): void => {
     // PLAYER.setPlayerPos(0, 0)
 
+    // PLAYER.changePlayerMovementStatus(false)
+    // setTimeout(() => PLAYER.changePlayerMovementStatus(true), 500)
+
     console.log('Game over')
     PLAYER.changePlayerMovementStatus(false)
 }
+
+// jumping, alternative movement

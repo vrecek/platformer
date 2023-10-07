@@ -25,6 +25,7 @@ class Entity {
         this.ctx.fill()
     }
 
+    
     // Get the position and size
     public getStats(): EntityStats {
         return {
