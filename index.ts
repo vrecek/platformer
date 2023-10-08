@@ -1,7 +1,6 @@
 import Entity from "./Entity.js"
 import Game from "./Game.js"
 import Player from "./Player.js"
-import { MoveKeys } from "./interfaces/PlayerTypes.js"
 
 
 console.log('start')
@@ -10,19 +9,23 @@ console.log('start')
 const GAME: Game = new Game(),
       CTX: CanvasRenderingContext2D = GAME.getCtx()
 
-const PLAYER: Player = new Player(0, 560, 40, 40, 2, CTX)
+const PLAYER: Player = new Player(210, 30, 40, 40, 2, CTX)
+// const PLAYER: Player = new Player(0, 560, 40, 40, 2, CTX)
 
 
 const ENEMY_ENTITIES: Entity[] = [
-    // new Entity(50, 50, 40, 40, CTX),
+    new Entity(50, 50, 40, 40, CTX),
     // new Entity(250, 200, 80, 40, CTX),
 
     // new Entity(600, 200, 80, 40, CTX),
     // new Entity(680, 200, 40, 120, CTX),
 ]
 const SURFACE_ENTITIES: Entity[] = [
-    new Entity(100, 300, 80, 40, CTX),
     new Entity(0, 500, 80, 40, CTX),
+    new Entity(50, 400, 80, 40, CTX),
+    new Entity(100, 300, 80, 40, CTX),
+    new Entity(150, 200, 80, 40, CTX),
+    new Entity(200, 100, 80, 40, CTX),
     new Entity(200, 560, 80, 40, CTX)
 ]
 
@@ -43,16 +46,12 @@ GAME.update(() => {
 
 
 
-    const ent_surfaceCollision: Entity | null = PLAYER.checkCollision(SURFACE_ENTITIES)
-
     PLAYER.handleAdvancedMoveKeys()
-    PLAYER.handleGravity(
-        !!ent_surfaceCollision,
-        PLAYER.isCanvasCollided(GAME.getCanvasStats())
-    )
+    PLAYER.handleGravity(!!PLAYER.checkCollision(SURFACE_ENTITIES), GAME.getCanvasStats())
 
     PLAYER.checkCollision(ENEMY_ENTITIES, collidedWithEnemy)
     PLAYER.checkCollision(SURFACE_ENTITIES, collidedWithSurface, () => PLAYER.resetBlockedKeys())
+    
     PLAYER.handleCanvasCollision(GAME.getCanvasStats())
 })
 

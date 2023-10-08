@@ -42,10 +42,9 @@ class Player extends Entity {
     }
 
     private handleJumping(): void {
-        if (this.keys.pressedKeys.includes('w') && !this.isJumping) {
+        if (this.keys.pressedKeys.includes('w') && !this.isJumping && !this.isFalling)
             this.isJumping = true
-        }
-        if (!this.isJumping || !this.movementStatus) return
+        if (!this.isJumping || !this.movementStatus || this.isFalling) return
 
 
         if (this.initVelocity <= FINISH_VEL) {
@@ -81,15 +80,16 @@ class Player extends Entity {
 
 
     // Handles the gravity (jumping up and down from an entity)
-    public handleGravity(entColl: boolean, canvasColl: boolean): void {
-        if (entColl || canvasColl || this.isJumping) {
-            if (!this.isJumping) {
-                this.resetJumpState()
-            }
-
+    public handleGravity(entColl: boolean, canvasStats: EntityStats): void {
+        if (this.isCanvasCollided(canvasStats) && this.y + this.h === canvasStats.h) {
+            this.resetJumpState()
             return
         }
+        if (!this.movementStatus || !this.isFalling && (entColl || this.isJumping)) 
+            return
 
+
+        this.isFalling = true
 
         this.finishVelocity *= ((1 % this.friction) + 1)
         this.y += this.finishVelocity
@@ -118,7 +118,7 @@ class Player extends Entity {
     }
 
 
-    // Check if the canvas is collided
+    // // Check if the canvas is collided
     public isCanvasCollided(canvas: EntityStats): boolean {
         const plrYHeight: number = this.y + this.h
 
@@ -133,15 +133,21 @@ class Player extends Entity {
     public handleCanvasCollision(canvas: EntityStats): void {
         const plrYHeight: number = this.y + this.h
 
+        if (this.y <= 0) {
+            this.isFalling = true
+            this.isJumping = false
 
-        if (!this.y)
+            this.y = COLL_PADDING
+            
             this.blockedKeys.push('w')
+        }
 
         if (!this.x)
             this.blockedKeys.push('a')
 
         if (plrYHeight >= canvas.h) {
             this.y = canvas.h - this.h // - COLL_PADDING
+
             this.blockedKeys.push('s')
         }
 
@@ -157,13 +163,16 @@ class Player extends Entity {
 
 
         // If the player is falling down to an object
-        if (this.isFalling && plrYHeight >= e.y) {
+        if (
+            this.isFalling && plrYHeight >= e.y && 
+            this.x < e.x + e.w && this.x > e.x
+        ) {
             this.resetJumpState()
             this.y = e.y - e.h // - COLL_PADDING
         }
 
         // If the player jump-touches an object from the ground
-        if (e.y + e.h <= this.y + 10) {
+        if (e.y + e.h <= this.y + 10 && !this.isFalling) {
             this.isJumping = false
             this.y = e.y + e.h + COLL_PADDING
         }
