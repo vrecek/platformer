@@ -1,27 +1,31 @@
 import Entity from "./Entity.js";
-const INIT_VEL = 5;
-const FINISH_VEL = INIT_VEL / 10;
+// const INIT_VEL: number = 5
+// const FINISH_VEL: number = INIT_VEL / 10
 const COLL_PADDING = .5;
 class Player extends Entity {
     keys;
     movementStatus;
     speedx;
+    jumpPower;
+    INIT_FINISH_VEL;
     blockedKeys;
     isJumping;
     isFalling;
     friction;
     initVelocity;
     finishVelocity;
-    constructor(x, y, w, h, speed, ctx) {
-        super(x, y, w, h, ctx);
+    constructor(x, y, w, h, speed, jumpPower) {
+        super(x, y, w, h);
+        this.INIT_FINISH_VEL = jumpPower / 10;
         this.isJumping = false;
         this.isFalling = false;
-        this.initVelocity = INIT_VEL;
-        this.finishVelocity = FINISH_VEL;
+        this.initVelocity = jumpPower;
+        this.finishVelocity = this.INIT_FINISH_VEL;
         this.friction = .95;
-        this.blockedKeys = [];
+        this.blockedKeys = new Set();
         this.movementStatus = true;
         this.speedx = speed;
+        this.jumpPower = jumpPower;
         this.keys = {
             pressed: false,
             pressedKeys: []
@@ -32,7 +36,7 @@ class Player extends Entity {
             this.isJumping = true;
         if (!this.isJumping || !this.movementStatus || this.isFalling)
             return;
-        if (this.initVelocity <= FINISH_VEL) {
+        if (this.initVelocity <= this.INIT_FINISH_VEL) {
             this.isJumping = false;
             this.isFalling = true;
         }
@@ -45,13 +49,13 @@ class Player extends Entity {
     resetJumpState() {
         this.isJumping = false;
         this.isFalling = false;
-        this.initVelocity = INIT_VEL;
-        this.finishVelocity = FINISH_VEL;
+        this.initVelocity = this.jumpPower;
+        this.finishVelocity = this.INIT_FINISH_VEL;
     }
     checkMovementCondition() {
         if (!this.keys.pressed ||
             !this.movementStatus ||
-            (this.blockedKeys?.length && this.blockedKeys.some(x => this.keys.pressedKeys.includes(x))))
+            (this.blockedKeys.size && [...this.blockedKeys].some(x => this.keys.pressedKeys.includes(x))))
             return true;
         return false;
     }
@@ -96,23 +100,23 @@ class Player extends Entity {
             this.isFalling = true;
             this.isJumping = false;
             this.y = COLL_PADDING;
-            this.blockedKeys.push('w');
+            this.blockedKeys.add('w');
         }
-        if (!this.x)
-            this.blockedKeys.push('a');
+        if (this.x <= 0)
+            this.blockedKeys.add('a');
         if (plrYHeight >= canvas.h) {
             this.y = canvas.h - this.h; // - COLL_PADDING
-            this.blockedKeys.push('s');
+            this.blockedKeys.add('s');
         }
         if (this.x + this.w === canvas.w)
-            this.blockedKeys.push('d');
+            this.blockedKeys.add('d');
     }
     // Stops the movement when the player collides with an entity
     stopCollisionMovement(ent) {
         const e = ent.getStats(), plrYHeight = this.y + this.h;
         // If the player is falling down to an object
         if (this.isFalling && plrYHeight >= e.y &&
-            this.x < e.x + e.w && this.x > e.x) {
+            this.x < e.x + e.w && this.x + this.w > e.x) {
             this.resetJumpState();
             this.y = e.y - e.h; // - COLL_PADDING
         }
@@ -123,13 +127,13 @@ class Player extends Entity {
         }
         // Stop moving towards the collided object
         if (e.y + e.h === this.y)
-            this.blockedKeys.push('w');
+            this.blockedKeys.add('w');
         else if (e.x + e.w === this.x)
-            this.blockedKeys.push('a');
+            this.blockedKeys.add('a');
         else if (e.y === plrYHeight)
-            this.blockedKeys.push('s');
+            this.blockedKeys.add('s');
         else if (this.x + this.w === e.x)
-            this.blockedKeys.push('d');
+            this.blockedKeys.add('d');
     }
     // Changes the player position
     setPlayerPos(newX, newY) {
@@ -182,7 +186,7 @@ class Player extends Entity {
     }
     // Clears the blocked keys array
     resetBlockedKeys() {
-        this.blockedKeys = [];
+        this.blockedKeys.clear();
     }
     //-------------------------- GETTERS
     // Get the movement status
