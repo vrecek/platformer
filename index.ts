@@ -50,14 +50,15 @@ GAME.update(() => {
 
 
 
-        PLAYER.handleAdvancedMoveKeys()
         PLAYER.handleGravity(!!PLAYER.checkCollision(SURFACE_ENTITIES), GAME.getCanvasStats())
+        PLAYER.resetBlockedKeys()
 
         PLAYER.checkCollision(ENEMY_ENTITIES, collidedWithEnemy)
-        PLAYER.checkCollision(SURFACE_ENTITIES, collidedWithSurface, () => PLAYER.resetBlockedKeys())
+        PLAYER.checkCollision(SURFACE_ENTITIES, collidedWithSurface)
         PLAYER.checkCollision(SCORE_ENTITIES, scoreCollide)
-
         PLAYER.handleCanvasCollision(GAME.getCanvasStats())
+
+        PLAYER.handleAdvancedMoveKeys()
 
     }
 })

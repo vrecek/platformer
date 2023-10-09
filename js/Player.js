@@ -73,18 +73,19 @@ class Player extends Entity {
     }
     // Detects the collision of the player
     checkCollision(entities, collidedFn, uncollidedFn) {
+        let collidedEntity = null;
         for (const ent of entities) {
             const { x, y, w, h } = ent.getStats();
             if (((this.x + this.w >= x) && (this.y + this.h >= y)) &&
                 ((this.x <= x + w) && (this.y <= y + h))) {
                 collidedFn ? collidedFn(ent) : null;
-                return ent;
+                collidedEntity = ent;
             }
             else {
                 uncollidedFn ? uncollidedFn(ent) : null;
             }
         }
-        return null;
+        return collidedEntity;
     }
     // // Check if the canvas is collided
     isCanvasCollided(canvas) {
@@ -116,23 +117,24 @@ class Player extends Entity {
         const e = ent.getStats(), plrYHeight = this.y + this.h;
         // If the player is falling down to an object
         if (this.isFalling && plrYHeight >= e.y &&
-            this.x < e.x + e.w && this.x + this.w > e.x) {
+            this.x + 1 < e.x + e.w && this.x + this.w - 1 > e.x) {
             this.resetJumpState();
-            this.y = e.y - e.h; // - COLL_PADDING
+            this.y = e.y - this.h; // - COLL_PADDING
         }
         // If the player jump-touches an object from the ground
-        if (e.y + e.h <= this.y + 10 && !this.isFalling) {
+        if (e.y + e.h < this.y + 10 && !this.isFalling) {
             this.isJumping = false;
+            this.isFalling = true;
             this.y = e.y + e.h + COLL_PADDING;
         }
         // Stop moving towards the collided object
         if (e.y + e.h === this.y)
             this.blockedKeys.add('w');
-        else if (e.x + e.w === this.x)
+        else if (e.x + e.w <= this.x + 10 && this.y + this.h > e.y)
             this.blockedKeys.add('a');
         else if (e.y === plrYHeight)
             this.blockedKeys.add('s');
-        else if (this.x + this.w === e.x)
+        else if (this.x + this.w >= e.x && this.y + this.h > e.y)
             this.blockedKeys.add('d');
     }
     // Changes the player position

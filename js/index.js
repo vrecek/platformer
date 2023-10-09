@@ -23,12 +23,13 @@ GAME.update(() => {
             ent.draw('green', CTX);
         for (const ent of currentLevel.scores)
             ent.draw('royalblue', CTX);
-        PLAYER.handleAdvancedMoveKeys();
         PLAYER.handleGravity(!!PLAYER.checkCollision(SURFACE_ENTITIES), GAME.getCanvasStats());
+        PLAYER.resetBlockedKeys();
         PLAYER.checkCollision(ENEMY_ENTITIES, collidedWithEnemy);
-        PLAYER.checkCollision(SURFACE_ENTITIES, collidedWithSurface, () => PLAYER.resetBlockedKeys());
+        PLAYER.checkCollision(SURFACE_ENTITIES, collidedWithSurface);
         PLAYER.checkCollision(SCORE_ENTITIES, scoreCollide);
         PLAYER.handleCanvasCollision(GAME.getCanvasStats());
+        PLAYER.handleAdvancedMoveKeys();
     }
 });
 GAME.updateLevelStats(1, currentLevel?.scores.length ?? 0);
