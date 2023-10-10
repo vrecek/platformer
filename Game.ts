@@ -32,6 +32,46 @@ class Game {
     }
 
 
+    // Stop the game if the screen is too small
+    public insufficientScreenHandler(): void {
+        const resizeFunc = (): void => {
+            if (
+                (window.innerWidth < this.canvas.width) || 
+                (window.innerHeight < this.canvas.height) 
+            ) {
+                window.onresize = null
+                document.body.textContent = null
+
+                const h1: Element = document.createElement('h1')
+                h1.textContent = "We're sorry!"
+
+                const p1: Element = document.createElement('p')
+                p1.textContent = "Your device is to small to display this game."
+
+                const p2: Element = document.createElement('p')
+                p2.textContent = `Minimum screen requirements: ${this.canvas.width}x${this.canvas.height}`
+
+                const a: HTMLAnchorElement = document.createElement('a')
+                a.textContent = 'Source code'
+                a.href = 'https://github.com/vrecek/platformer'
+                a.target = '_blank'
+
+                const container: Element = document.createElement('section')
+                container.className = 'screen-error'
+                container.appendChild(h1)
+                container.appendChild(p1)
+                container.appendChild(p2)
+                container.appendChild(a)
+
+                document.body.appendChild(container)
+            }
+        }
+
+        resizeFunc()
+        window.onresize = resizeFunc
+    }
+
+
     // Update every frame
     public update(fn: VoidFn): void {
         const refresh = () => {

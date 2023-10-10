@@ -30,6 +30,31 @@ body {
 }
 
 section {
+    &.screen-error {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 1em;
+        text-align: center;
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 1em;
+        }
+
+        a {
+            text-decoration: none;
+            color: #303030;
+            margin-top: 1em;
+            font-size: 1rem;
+        }
+
+        p {
+            font-size: 1.25rem;
+        }
+    }
+
     &.level-info {
         margin-bottom: .5em;
         display: flex;

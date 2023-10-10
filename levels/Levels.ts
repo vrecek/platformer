@@ -17,8 +17,8 @@ const LEVELS: Level[] = [
         ],
         scores: [
             new Entity(250, 450, 20, 20),
-            // new Entity(450, 450, 20, 20),
-            // new Entity(775, 575, 20, 20),
+            new Entity(450, 450, 20, 20),
+            new Entity(775, 575, 20, 20),
         ]
     },
 

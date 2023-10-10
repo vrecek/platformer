@@ -66,7 +66,7 @@ GAME.update(() => {
 GAME.updateLevelStats(1, currentLevel?.scores.length ?? 0)
 PLAYER.initPressKeyEvents()
 
-
+GAME.insufficientScreenHandler()
 
 
 // --------------- Funcs ------------------
