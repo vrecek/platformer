@@ -1,5 +1,5 @@
 import Entity from "../Entity"
-import Player from "../Player"
+
 
 export type VoidFn
  = () => void
@@ -23,3 +23,5 @@ export type Level = {
     surfaces: Entity[]
     scores: Entity[]
 }
+
+export type LevelLoader = 'next' | 'current'

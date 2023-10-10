@@ -1,12 +1,14 @@
 import Entity from "./Entity"
-import { CanvasStats, Level, VoidFn } from "./interfaces/GameTypes"
+import { CanvasStats, Level, LevelLoader, VoidFn } from "./interfaces/GameTypes"
 
 
 class Game {
     private canvas: HTMLCanvasElement
     private ctx: CanvasRenderingContext2D
+
     private level: number
     private levels: Level[]
+
     private points: number
     private totalPoints: number
 
@@ -67,13 +69,10 @@ class Game {
 
 
     // Handles picking up the score
-    public handleGettingScore(sc: Level, ent: Entity): void {
+    public handleGettingScore(level: Level, ent: Entity): void {
         this.updateScoreText(1)
         
-        sc.scores.splice(
-            sc.scores.findIndex( x => x.getStats().id === ent.getStats().id ), 
-            1
-        )
+        level.scores = level.scores.filter(x => x.getStats().id !== ent.getStats().id)
     }
 
 
@@ -83,29 +82,24 @@ class Game {
     }
 
 
-    // Loads and sets up the next level
-    public loadNextLevel(): Level | null {
-        const nextLevel: Level | null = this.levels?.[this.level] ?? null
+    // Get and set the level details
+    public loadLevel(type: LevelLoader): Level | null {
+        const isCurrent: boolean = type === 'current',
+              newLevel: Level | null = this.levels[ this.level - (isCurrent ? 1 : 0) ]
 
-        if (nextLevel) {
-            this.level++
+        if (newLevel) {
+            this.level += isCurrent ? 0 : 1
             this.points = 0
-            this.totalPoints = nextLevel.scores.length
+            this.totalPoints = newLevel.scores.length
         }
 
-        return nextLevel
+        return newLevel ? {...newLevel} : null
     }
 
 
     // Gets the current level
     public getCurrentLevel(): number {
         return this.level
-    }
-
-
-    // Gets the current level details
-    public getCurrentLevelDetails(): Level | null {
-        return this.levels?.[this.level - 1] ?? null
     }
 
 

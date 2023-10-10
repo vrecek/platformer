@@ -9,7 +9,8 @@ console.log('Start')
 
 
 const GAME: Game = new Game(LEVELS),
-    CTX: CanvasRenderingContext2D = GAME.getCtx()
+      CTX: CanvasRenderingContext2D = GAME.getCtx(),
+      resetBtn: HTMLButtonElement = document.querySelector('button.reset')!
 
 
 // -------------------- ENTITIES --------------------------
@@ -19,12 +20,10 @@ const PLAYER: Player = new Player(210, 30, 40, 40, 2, 5)
 // ------------------------------------------------------
 
 let initPlayerPos: boolean = false
-let currentLevel: Level | null = GAME.getCurrentLevelDetails()
+let currentLevel: Level | null = GAME.loadLevel('current')
 
 
 GAME.setWidth(800, 600)
-
-
 
 GAME.update(() => {
     if (currentLevel) {
@@ -72,28 +71,30 @@ PLAYER.initPressKeyEvents()
 
 // --------------- Funcs ------------------
 
+// Handle the "restart" button
+resetBtn.addEventListener('click', () => {
+    PLAYER.changePlayerMovementStatus(true)
+    proceedToNextLevel( GAME.loadLevel('current')! )
+})
+
 
 // When the player scored the point
 const scoreCollide = (score: Entity): void => {
     GAME.handleGettingScore(currentLevel!, score)
 
-    // When the game is finished
+    // When the level is finished
     if (GAME.hasLevelBeenFinished()) {
-        console.log('Finished')
-        const nextLevel: Level | null = GAME.loadNextLevel()
+        console.log('Finished level ', GAME.getCurrentLevel())
 
-        if (nextLevel) {
-            initPlayerPos = false
-            currentLevel = nextLevel
+        const nextLevel: Level | null = GAME.loadLevel('next')
 
-            GAME.updateScoreText()
-
-        } else {
-            document.body.textContent = 'End'
-        }
+        if (nextLevel)
+            proceedToNextLevel(nextLevel)
+        else 
+            showFinishScreen()
+        
     }
 }
-
 
 
 // When collided with a wall/floor
@@ -105,5 +106,53 @@ const collidedWithSurface = (ent: Entity): void => {
 // Game over
 const collidedWithEnemy = (): void => {
     console.log('Game over')
+
     PLAYER.changePlayerMovementStatus(false)
+
+    if (document.querySelector('h3')) 
+        return
+
+    const h3: Element = document.createElement('h3')
+    h3.textContent = 'You lost'
+
+    document.body.appendChild(h3)
+}
+
+
+// Proceeds to the next level
+const proceedToNextLevel = (nextLevel: Level): void => {
+    document.querySelector('h3')?.remove()
+    
+    initPlayerPos = false
+    currentLevel = nextLevel
+
+    GAME.updateScoreText()
+}
+
+
+// When finished every level
+const showFinishScreen = (): void => {
+    console.log('Finish')
+
+    document.body.textContent = null
+
+    const h1: Element = document.createElement('h1')
+    h1.textContent = 'You have finished the game'
+
+    const btnRestart: HTMLButtonElement = document.createElement('button')
+    btnRestart.textContent = 'Restart'
+    btnRestart.onclick = () => window.location.reload()
+
+    const a: HTMLAnchorElement = document.createElement('a')
+    a.textContent = 'Source code'
+    a.href = 'https://github.com/vrecek/platformer'
+    a.target = '_blank'
+
+    const finishWrapper: Element = document.createElement('section')
+    finishWrapper.className = 'finish-wrapper'
+    finishWrapper.appendChild(h1)
+    finishWrapper.appendChild(btnRestart)
+    finishWrapper.appendChild(a)
+
+    document.body.appendChild(finishWrapper)
 }

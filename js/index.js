@@ -2,12 +2,12 @@ import Game from "./Game.js";
 import Player from "./Player.js";
 import LEVELS from "./levels/Levels.js";
 console.log('Start');
-const GAME = new Game(LEVELS), CTX = GAME.getCtx();
+const GAME = new Game(LEVELS), CTX = GAME.getCtx(), resetBtn = document.querySelector('button.reset');
 // -------------------- ENTITIES --------------------------
 const PLAYER = new Player(210, 30, 40, 40, 2, 5);
 // ------------------------------------------------------
 let initPlayerPos = false;
-let currentLevel = GAME.getCurrentLevelDetails();
+let currentLevel = GAME.loadLevel('current');
 GAME.setWidth(800, 600);
 GAME.update(() => {
     if (currentLevel) {
@@ -35,21 +35,22 @@ GAME.update(() => {
 GAME.updateLevelStats(1, currentLevel?.scores.length ?? 0);
 PLAYER.initPressKeyEvents();
 // --------------- Funcs ------------------
+// Handle the "restart" button
+resetBtn.addEventListener('click', () => {
+    PLAYER.changePlayerMovementStatus(true);
+    proceedToNextLevel(GAME.loadLevel('current'));
+});
 // When the player scored the point
 const scoreCollide = (score) => {
     GAME.handleGettingScore(currentLevel, score);
-    // When the game is finished
+    // When the level is finished
     if (GAME.hasLevelBeenFinished()) {
-        console.log('Finished');
-        const nextLevel = GAME.loadNextLevel();
-        if (nextLevel) {
-            initPlayerPos = false;
-            currentLevel = nextLevel;
-            GAME.updateScoreText();
-        }
-        else {
-            document.body.textContent = 'End';
-        }
+        console.log('Finished level ', GAME.getCurrentLevel());
+        const nextLevel = GAME.loadLevel('next');
+        if (nextLevel)
+            proceedToNextLevel(nextLevel);
+        else
+            showFinishScreen();
     }
 };
 // When collided with a wall/floor
@@ -60,4 +61,36 @@ const collidedWithSurface = (ent) => {
 const collidedWithEnemy = () => {
     console.log('Game over');
     PLAYER.changePlayerMovementStatus(false);
+    if (document.querySelector('h3'))
+        return;
+    const h3 = document.createElement('h3');
+    h3.textContent = 'You lost';
+    document.body.appendChild(h3);
+};
+// Proceeds to the next level
+const proceedToNextLevel = (nextLevel) => {
+    document.querySelector('h3')?.remove();
+    initPlayerPos = false;
+    currentLevel = nextLevel;
+    GAME.updateScoreText();
+};
+// When finished every level
+const showFinishScreen = () => {
+    console.log('Finish');
+    document.body.textContent = null;
+    const h1 = document.createElement('h1');
+    h1.textContent = 'You have finished the game';
+    const btnRestart = document.createElement('button');
+    btnRestart.textContent = 'Restart';
+    btnRestart.onclick = () => window.location.reload();
+    const a = document.createElement('a');
+    a.textContent = 'Source code';
+    a.href = 'https://github.com/vrecek/platformer';
+    a.target = '_blank';
+    const finishWrapper = document.createElement('section');
+    finishWrapper.className = 'finish-wrapper';
+    finishWrapper.appendChild(h1);
+    finishWrapper.appendChild(btnRestart);
+    finishWrapper.appendChild(a);
+    document.body.appendChild(finishWrapper);
 };

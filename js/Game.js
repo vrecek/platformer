@@ -42,31 +42,27 @@ class Game {
         this.updateScoreText();
     }
     // Handles picking up the score
-    handleGettingScore(sc, ent) {
+    handleGettingScore(level, ent) {
         this.updateScoreText(1);
-        sc.scores.splice(sc.scores.findIndex(x => x.getStats().id === ent.getStats().id), 1);
+        level.scores = level.scores.filter(x => x.getStats().id !== ent.getStats().id);
     }
     // Checks if the player has gotten every point
     hasLevelBeenFinished() {
         return this.points === this.totalPoints;
     }
-    // Loads and sets up the next level
-    loadNextLevel() {
-        const nextLevel = this.levels?.[this.level] ?? null;
-        if (nextLevel) {
-            this.level++;
+    // Get and set the level details
+    loadLevel(type) {
+        const isCurrent = type === 'current', newLevel = this.levels[this.level - (isCurrent ? 1 : 0)];
+        if (newLevel) {
+            this.level += isCurrent ? 0 : 1;
             this.points = 0;
-            this.totalPoints = nextLevel.scores.length;
+            this.totalPoints = newLevel.scores.length;
         }
-        return nextLevel;
+        return newLevel ? { ...newLevel } : null;
     }
     // Gets the current level
     getCurrentLevel() {
         return this.level;
-    }
-    // Gets the current level details
-    getCurrentLevelDetails() {
-        return this.levels?.[this.level - 1] ?? null;
     }
     // Returns the CTX
     getCtx() {
