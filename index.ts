@@ -74,6 +74,8 @@ GAME.insufficientScreenHandler()
 // Handle the "restart" button
 resetBtn.addEventListener('click', () => {
     PLAYER.changePlayerMovementStatus(true)
+    toggleEnemyAnimation(true)
+
     proceedToNextLevel( GAME.loadLevel('current')! )
 })
 
@@ -108,6 +110,8 @@ const collidedWithEnemy = (): void => {
     console.log('Game over')
 
     PLAYER.changePlayerMovementStatus(false)
+    toggleEnemyAnimation(false)
+
 
     if (document.querySelector('h3')) 
         return
@@ -155,4 +159,11 @@ const showFinishScreen = (): void => {
     finishWrapper.appendChild(a)
 
     document.body.appendChild(finishWrapper)
+}
+
+
+//
+const toggleEnemyAnimation = (val: boolean): void => {
+    for (const ent of currentLevel?.enemies ?? [])
+        ent.toggleAnimation(val)
 }

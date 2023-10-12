@@ -2,7 +2,6 @@ import Entity from '../Entity.js'
 import { Level } from '../interfaces/GameTypes'
 
 
-// HAS TO BE AT LEAST ONE "SURFACE" ENTITY IN EACH LEVEL
 const LEVELS: Level[] = [
     // LEVEL 1
     {
@@ -45,7 +44,7 @@ const LEVELS: Level[] = [
         ]
     },
 
-    // // LEVEL 3
+    // LEVEL 3
     {
         player: {
             x: 0,
@@ -67,6 +66,49 @@ const LEVELS: Level[] = [
             new Entity(180, 500, 20, 20),
             new Entity(280, 400, 20, 20),
             new Entity(570, 370, 20, 20),
+        ]
+    },
+
+    // LEVEL 4
+    {
+        player: {
+            x: 20,
+            y: 40
+        },
+        enemies: [
+            new Entity(0, 560, 800, 40),
+            new Entity(285, 25, 20, 40, {
+                speed: 4,
+                paths: [
+                    { x: 285, y: 200 },
+                ]
+            }),
+            new Entity(500, 200, 20, 40, {
+                speed: 4,
+                paths: [
+                    { x: 500, y: 25 },
+                ]
+            }),
+            new Entity(240, 270, 40, 20, {
+                speed: 3,
+                paths: [
+                    { x: 470, y: 270 },
+                ]
+            }),
+        ],
+        surfaces: [
+            new Entity(20, 80, 100, 20),
+            new Entity(50, 230, 40, 20),
+            new Entity(175, 150, 40, 20),
+            new Entity(400, 150, 40, 20),
+            new Entity(600, 220, 40, 20),
+            new Entity(175, 300, 400, 20),
+        ],
+        scores: [
+            new Entity(610, 190, 20, 20),
+            new Entity(60, 200, 20, 20),
+            new Entity(410, 120, 20, 20),
+            new Entity(360, 270, 20, 20),
         ]
     },
 ]
