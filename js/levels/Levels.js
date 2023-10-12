@@ -1,8 +1,5 @@
-import Entity from '../Entity.js'
-import { Level } from '../interfaces/GameTypes'
-
-
-const LEVELS: Level[] = [
+import Entity from '../Entity.js';
+const LEVELS = [
     // LEVEL 1
     {
         player: {
@@ -20,7 +17,6 @@ const LEVELS: Level[] = [
             new Entity(775, 575, 20, 20),
         ]
     },
-
     // LEVEL 2
     {
         player: {
@@ -43,7 +39,6 @@ const LEVELS: Level[] = [
             new Entity(190, 220, 20, 20),
         ]
     },
-
     // LEVEL 3
     {
         player: {
@@ -68,7 +63,6 @@ const LEVELS: Level[] = [
             new Entity(570, 370, 20, 20),
         ]
     },
-
     // LEVEL 4
     {
         player: {
@@ -111,7 +105,5 @@ const LEVELS: Level[] = [
             new Entity(360, 270, 20, 20),
         ]
     },
-]
-
-
-export default LEVELS
+];
+export default LEVELS;
