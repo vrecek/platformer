@@ -1,12 +1,21 @@
 import Entity from "../Entity"
 
 
+export type OptionalArgs = {
+    name?:     Maybe
+    color?:    Maybe
+    image?:    Maybe
+    animPath?: AnimationArg
+}
+
 export type EntityStats = {
-    id: string
-    w: number
-    h: number
-    x: number
-    y: number
+    id:   string
+    name: Maybe
+    anim: Maybe<AnimationObject>
+    w:    number
+    h:    number
+    x:    number
+    y:    number
 }
 
 export type CollisionCb = (ent: Entity) => void
@@ -24,4 +33,6 @@ export type AnimationPath = {
 export type AnimationArg = {
     speed: number
     paths: AnimationPath[]
-}
+} | null
+
+export type Maybe<T = string> = T | null | undefined
