@@ -7,6 +7,7 @@ class Entity
     protected name:      Maybe
     protected color:     Maybe
     protected image:     Maybe<HTMLImageElement>
+    protected image_src: Maybe
     protected x:         number
     protected y:         number
     protected w:         number
@@ -30,7 +31,10 @@ class Entity
             const i: HTMLImageElement = new Image();
 
             i.src = args.image
-            i.onload = () => { this.image = i }
+            i.onload = () => {
+                this.image = i
+                this.image_src = args.image
+            }
         }
 
         this.animation = args?.animPath ? {
@@ -114,6 +118,7 @@ class Entity
         return {
             id:   this.id,
             name: this.name,
+            img:  this.image_src,
             anim: this.animation,
             x:    this.x,
             y:    this.y,

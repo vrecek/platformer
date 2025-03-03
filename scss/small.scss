@@ -1,0 +1,24 @@
+body:has(section.screen-error) {
+    section.screen-error {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 1em;
+        text-align: center;
+    
+        h1 {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 1em;
+        }
+    
+        a {
+            text-decoration: none;
+            margin-top: 1em;
+            color: #eee;
+            font-size: 1rem;
+        }
+    
+        p { font-size: 1.25rem; }
+    }
+}

@@ -11,6 +11,7 @@ export type OptionalArgs = {
 export type EntityStats = {
     id:   string
     name: Maybe
+    img:  Maybe
     anim: Maybe<AnimationObject>
     w:    number
     h:    number
@@ -36,3 +37,6 @@ export type AnimationArg = {
 } | null
 
 export type Maybe<T = string> = T | null | undefined
+
+export type Platforms = 'speed' | 'jump'
+export type Items = 'jump'

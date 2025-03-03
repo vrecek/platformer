@@ -1,15 +1,17 @@
 import Entity from "./Entity.js";
 import { CollisionCb, EntityStats, Maybe } from "./interfaces/EntityTypes.js";
 import { CanvasStats, KeysInput } from "./interfaces/GameTypes.js";
-import { MoveKeys, PlayerPos } from "./interfaces/PlayerTypes.js";
+import { Bindings, PlayerPos } from "./interfaces/PlayerTypes.js";
+import Item from "./Item.js";
 
 
 
 class Player extends Entity 
 { 
     private keys:            KeysInput
-    private blockedKeys:     Set<MoveKeys>
-    private possibleKeys:    string[]
+    private blockedKeys:     Set<string>
+    private bindings:        Bindings
+    private flat_bindings:   string[]
     private movementStatus:  boolean
 
     private speedx:          number
@@ -24,6 +26,8 @@ class Player extends Entity
     private friction:        number
     private initVelocity:    number
     private finishVelocity:  number
+
+    public items: (Item|null)[]
 
 
     public constructor(x: number, y: number, w: number, h: number, speed: number, jumpPower: number)
@@ -40,9 +44,17 @@ class Player extends Entity
         this.finishVelocity = this.INIT_FINISH_VEL
         this.friction       = .925
 
-        this.blockedKeys    = new Set<MoveKeys>()
+        this.items = new Array(6).fill(null)
+
+        this.blockedKeys    = new Set<string>()
         this.movementStatus = true
-        this.possibleKeys   = ['w', 'a', 's', 'd']
+
+        this.bindings = {
+            jump:  { keys: ['w', ' ', 'ArrowUp'], fn: ()=>{} },
+            left:  { keys: ['a', 'ArrowLeft'],    fn: ()=>{ this.x -= this.speedx } },
+            right: { keys: ['d', 'ArrowRight'],   fn: ()=>{ this.x += this.speedx } },
+        }
+        this.flat_bindings = Object.values(this.bindings).map(x => x.keys).flat()
 
         this.speedx    = speed
         this.jumpPower = jumpPower
@@ -56,7 +68,7 @@ class Player extends Entity
 
     private handleJumping(force?: boolean): void 
     {
-        if (force || (this.keys.pressedKeys.includes('w') && !this.isJumping && !this.isFalling))
+        if (force || (this.checkBinding('jump') && !this.isJumping && !this.isFalling))
             this.isJumping = true
 
         if (!this.isJumping || !this.movementStatus || this.isFalling) 
@@ -97,6 +109,16 @@ class Player extends Entity
         return false
     }
 
+    private checkBinding(action: string): boolean 
+    {
+        return this.keys.pressedKeys.some(x => this.bindings[action].keys.includes(x))
+    }
+
+    private blockAction(action: string): void
+    {
+        for (const x of this.bindings[action].keys)
+            this.blockedKeys.add(x)
+    }
 
 
     public handleGravity(entColl: Maybe<Entity>, canvasStats: CanvasStats): void 
@@ -162,13 +184,13 @@ class Player extends Entity
             this.isJumping = false
 
             this.y = this.COLL_PADDING
-            this.blockedKeys.add('w')
+            this.blockAction('jump')
         }
         
         if (this.x <= 0)
         {
             this.x = 0
-            this.blockedKeys.add('a')
+            this.blockAction('left')
         }
 
         if (plrYHeight >= canvas.h) {
@@ -178,7 +200,7 @@ class Player extends Entity
         }
 
         if (this.x + this.w >= canvas.w)
-            this.blockedKeys.add('d')
+            this.blockAction('right')
     }
 
 
@@ -188,26 +210,31 @@ class Player extends Entity
               plrYHeight: number      = this.y + this.h,
               anim_speed: number      = e.anim?.speed ?? 0
 
-        let from_bottom:  boolean = false
+        let from_bottom:  boolean = false,
+            from_top:     boolean = false
               
 
         // If the player is falling down to an object
         if (
             this.isFalling && plrYHeight >= e.y && 
-            this.x < e.x + e.w-2 && this.x + this.w-2 > e.x
+            this.x < e.x + e.w-2 && this.x + this.w-2 > e.x ||
+            (e.anim && e.anim.paths[e.anim.moveLevel].y < e.anim.paths[0].y)
         ) {
             this.resetJumpState()
 
             if (!e.anim)
                 this.y = e.y - this.h
+
+            from_top = true
         }
+
 
         // If the player jump-touches an object from the ground
         if (e.y + e.h < this.y + this.jumpPower && !this.isFalling) {
             this.isJumping = false
             this.isFalling = true
             this.y = e.y + e.h + 2
-
+            
             from_bottom = true
         }
 
@@ -225,12 +252,16 @@ class Player extends Entity
 
 
         if (e.y + e.h === this.y) 
-            this.blockedKeys.add('w')
+            this.blockAction('jump')
 
-        else if (e.x + e.w <= this.x + 10 && this.y + this.h > e.y + anim_speed)
+        else if (e.x + e.w <= this.x + this.speedx && this.y + this.h > e.y + anim_speed)
         {
-            if (!e.anim) this.x = e.x + e.w
-            this.blockedKeys.add('a')
+            if (!from_bottom && !from_top) 
+                this.x = e.x + e.w
+
+            if (e.anim) this.x++
+
+            this.blockAction('left')
         }
 
         else if (e.y === plrYHeight) 
@@ -238,8 +269,10 @@ class Player extends Entity
 
         else if (this.x + this.w >= e.x && this.y + this.h > e.y + anim_speed)
         {
-            if (!e.anim) this.x = e.x - this.w
-            this.blockedKeys.add('d')
+            if (!from_bottom && !from_top) 
+                this.x = e.x - this.w
+
+            this.blockAction('right')
         }
     }
 
@@ -267,21 +300,27 @@ class Player extends Entity
     public handleAdvancedMoveKeys(): void 
     {
         this.handleJumping()
-        
+
         if (this.checkMovementCondition())
             return
 
-        if (this.keys.pressedKeys.includes('a'))
-            this.x -= this.speedx
+        for (const x in this.bindings)
+        {
+            if (this.checkBinding(x))
+                this.bindings[x].fn()
+        }
+    }
 
-        if (this.keys.pressedKeys.includes('d'))
-            this.x += this.speedx
+
+    public isTouchingGround(): boolean
+    {
+        return !this.isJumping && !this.isFalling
     }
 
 
     public addKey(key: string): void
     {
-        if (!this.possibleKeys.includes(key) || this.keys.pressedKeys.includes(key))
+        if (!this.flat_bindings.includes(key) || this.keys.pressedKeys.includes(key))
             return
 
         this.keys.pressed = true
@@ -343,6 +382,13 @@ class Player extends Entity
     {
         this.x = newX
         this.y = newY
+    }
+
+
+    public addBinding(action: string, keys: string[], fn: ()=>void): void
+    {
+        this.bindings[action] = { keys, fn }
+        this.flat_bindings    = Object.values(this.bindings).map(x => x.keys).flat()
     }
 
 

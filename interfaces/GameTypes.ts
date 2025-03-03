@@ -1,4 +1,5 @@
 import Entity from "../Entity"
+import Item from "../Item"
 import Score from "../Score"
 
 
@@ -23,6 +24,7 @@ export type Level = {
     surfaces:  Entity[]
     scores:    Score[]
     platforms: Entity[]
+    items:     Item[]
 }
 
 export type LevelLoader = 'next' | 'current'

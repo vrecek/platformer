@@ -34,9 +34,12 @@ class Game
     }
 
 
-    public insufficientScreenHandler(): void
+    public insufficientScreenHandler(): boolean
     {
-        if ( (window.innerWidth < this.canvas.width) || (window.innerHeight < this.canvas.height) )
+        const MAX_W: number = 1280,
+              MAX_H: number = 720
+
+        if ( (window.innerWidth < MAX_W) || (window.innerHeight < MAX_H) )
         {
             document.body.textContent = null
 
@@ -47,7 +50,7 @@ class Game
             p1.textContent = "Your device is too small to display this game."
 
             const p2: Element = document.createElement('p')
-            p2.textContent = `Minimum screen requirements: ${this.canvas.width}x${this.canvas.height}`
+            p2.textContent = `Minimum screen requirements: ${MAX_W}x${MAX_H}`
 
             const a: HTMLAnchorElement = document.createElement('a')
             a.textContent = 'Source code'
@@ -62,7 +65,11 @@ class Game
             container.appendChild(a)
 
             document.body.appendChild(container)
+
+            return true
         }
+
+        return false
     }
 
 
@@ -121,10 +128,11 @@ class Game
         let newLevel: Level  | undefined,
             levelNr:  number | undefined
 
+
         if (typeof type === 'number')
         {
-            newLevel  = this.levels[type-1]
-            levelNr   = type
+            newLevel = this.levels[type-1]
+            levelNr  = type
         }
         else
         {

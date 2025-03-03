@@ -6,29 +6,48 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="/data/logo.png" type="image/png">
     <link rel="stylesheet" href="css/index.css">
+    <link rel="stylesheet" href="css/finish.css">
+    <link rel="stylesheet" href="css/small.css">
     <script type="module" src="js/index.js" defer></script>
     <title>Platformer</title>
 </head>
 
 <body>
 
-    <section class="level-info">
+    <main>
+        
+        <aside class="eq">
+            <section class="items">
+                <div class="active"><img src=""></div>
+                <div><img src=""></div>
+                <div><img src=""></div>
+                <div><img src=""></div>
+                <div><img src=""></div>
+                <div><img src=""></div>
+            </section>
+        </aside>
 
-        <section>
-            <h1>Level 1</h1>
-            <h2>Score: 0/10</h2>
+        <section class="game">
+            <section class="level-info">
+                <section>
+                    <h1>Level 1</h1>
+                    <h2>Score: 0/10</h2>
+                </section>
+        
+                <button class="reset">Restart level</button>
+            </section>
+            
+            <canvas></canvas>
         </section>
 
-        <button class="reset">Restart level</button>
-        
-    </section>
+        <aside class="misc">
+            <section class="lvl">
+                <button>Load level</button>
+                <input class="lvlinput" type="text">
+            </section>
+        </aside>
 
-    <section class="lvl">
-        <button>Load level</button>
-        <input class="lvlinput" type="text">
-    </section>
-
-    <canvas></canvas>
+    </main>
 
 </body>
 
