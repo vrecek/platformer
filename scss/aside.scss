@@ -1,0 +1,84 @@
+aside {
+    width: 20%;
+    background: rgb(50, 50, 81);
+    padding: 1em;
+
+    p.title {
+        color: #758ed9;
+        margin-bottom: .5em;
+        font-size: 1.25rem;
+        text-transform: uppercase;
+    }
+
+    &.eq {
+        section.effects {
+            div.container {
+                display: flex;
+                align-items: center;
+                opacity: .25;
+
+                figure {
+                    width: 30px;
+                    height: 30px;
+                    background: #454F6B;
+                    border: 1px solid #616189;
+                    border-radius: .25em;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    margin-right: .5em;
+
+                    img {
+                        width: 60%;
+                        height: 60%;
+                        object-fit: cover;
+                    }
+                }
+
+                div.bar {
+                    background: #454F6B;
+                    height: 8px;
+                    flex-grow: 1;
+
+                    div {
+                        height: 100%;
+                        width: 0%;
+                        background: #b0b0b0;
+                    }
+                }
+
+                &.active { opacity: 1 }
+            }
+        }
+
+        section.items {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            margin-bottom: 2em;
+
+            div {
+                width: 29%;
+                flex-shrink: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                aspect-ratio: 1;
+                margin-bottom: 1em;
+                background: rgb(58, 58, 92);
+                border-radius: .5em;
+                border: 2px solid #454F6B;
+
+                &.active { border-color: rgb(114, 150, 255); }
+
+                img {
+                    object-fit: cover;
+                    width: 60%;
+                    height: 60%;
+
+                    &[src=""] { display: none; }
+                }
+            }
+        }
+    }
+}

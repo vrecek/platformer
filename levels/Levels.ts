@@ -41,8 +41,8 @@ const LEVELS: Level[] = [
             new Item(250, 550, 'jump'),
             new Item(300, 550, 'jump'),
             new Item(350, 550, 'jump'),
-            new Item(400, 550, 'jump'),
-            new Item(450, 550, 'jump'),
+            new Item(400, 550, 'speed'),
+            new Item(450, 550, 'speed'),
         ]
     },
 
@@ -105,52 +105,53 @@ const LEVELS: Level[] = [
     //     platforms: []
     // },
     
-    // {
-    //     player: { x: 20, y: 40 },
-    //     enemies: [
-    //         new Entity(0, 560, 800, 40),
-    //         new Entity(285, 25, 20, 40, {
-    //             animPath: {
-    //                 speed: 4,
-    //                 paths: [{ x: 285, y: 210 }]
-    //             }
-    //         }),
-    //         new Entity(500, 210, 20, 40, {
-    //             animPath: {
-    //                 speed: 4,
-    //                 paths: [{ x: 500, y: 25 }]
-    //             }
-    //         }),
-    //         new Entity(240, 270, 40, 20, {
-    //             animPath: {
-    //                 speed: 4,
-    //                 paths: [{ x: 470, y: 270 }]
-    //             }
-    //         }),
-    //     ],
-    //     surfaces: [
-    //         new Entity(20, 80, 100, 20),
+    {
+        player: { x: 20, y: 40 },
+        enemies: [
+            new Entity(0, 560, 800, 40),
+            new Entity(285, 25, 20, 40, {
+                animPath: {
+                    speed: 4,
+                    paths: [{ x: 285, y: 210 }]
+                }
+            }),
+            new Entity(500, 210, 20, 40, {
+                animPath: {
+                    speed: 4,
+                    paths: [{ x: 500, y: 25 }]
+                }
+            }),
+            new Entity(240, 270, 40, 20, {
+                animPath: {
+                    speed: 4, interval_wait: 500,
+                    paths: [{ x: 470, y: 270 }]
+                }
+            }),
+        ],
+        surfaces: [
+            new Entity(20, 80, 100, 20),
 
-    //         new Entity(50, 270, 40, 10),
-    //         new Entity(175, 170, 40, 10),
-    //         new Entity(115, 215, 40, 10),
-    //         new Entity(115, 290, 40, 10),
+            new Entity(50, 270, 40, 10),
+            new Entity(175, 170, 40, 10),
+            new Entity(115, 215, 40, 10),
+            new Entity(115, 290, 40, 10),
 
-    //         new Entity(300, 150, 40, 20),
-    //         new Entity(400, 150, 40, 20),
-    //         new Entity(500, 150, 40, 20),
-    //         new Entity(640, 260, 40, 20),
+            new Entity(300, 150, 40, 20),
+            new Entity(400, 150, 40, 20),
+            new Entity(500, 150, 40, 20),
+            new Entity(640, 260, 40, 20),
 
-    //         new Entity(175, 300, 400, 20),
-    //     ],
-    //     scores: [
-    //         // new Score(650, 200),
-    //         new Score(60, 200),
-    //         // new Score(510, 120),
-    //         // new Score(360, 270),
-    //     ],
-    //     platforms: []
-    // },
+            new Entity(175, 300, 400, 20),
+        ],
+        scores: [
+            // new Score(650, 200),
+            new Score(60, 200),
+            // new Score(510, 120),
+            // new Score(360, 270),
+        ],
+        platforms: [],
+        items: []
+    },
 ]
 
 

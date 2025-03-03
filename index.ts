@@ -53,7 +53,7 @@ GAME.update(() => {
         }
 
         for (const ent of enemies)
-            ent.draw(CTX, '#f71313')
+            ent.draw(CTX, '#e73737')
 
         for (const ent of surfaces)
             ent.draw(CTX, '#3a8cf3')
@@ -86,21 +86,10 @@ GAME.insufficientScreenHandler()
 PLAYER.initPressKeyEvents()
 
 
-PLAYER.addBinding('item_scroll', ['q'], () => {
-    if (!item_toggle) 
-        return
+PLAYER.addBinding('item_scroll-backwards', ['q'], () => activeItemSelector(true))
+PLAYER.addBinding('item_scroll-forwards',  ['e'], () => activeItemSelector())
 
-    item_toggle = false
-
-    const eq: Element[] = [...document.querySelector('aside.eq section.items')!.children]
-    let   i:  number    = eq.findIndex(x => x.classList.contains('active'))
-
-    i = itemActiveToggler(i, eq)
-
-    setTimeout(() => item_toggle = true, 100);
-})
-
-PLAYER.addBinding('item_use', ['e'], () => {
+PLAYER.addBinding('item_use', ['f'], () => {
     if (!item_toggle) 
         return
 
@@ -117,8 +106,7 @@ PLAYER.addBinding('item_use', ['e'], () => {
 
         PLAYER.items[i] = null
 
-        i = itemActiveToggler(i, eq)
-    
+        activeItemToggler(i, eq)
         displayItems()
     }
 })
@@ -138,15 +126,6 @@ document.querySelector('section.lvl button')?.addEventListener('click', (e: Even
 })
 
 
-resetBtn?.addEventListener('click', () => {
-    PLAYER.changePlayerMovementStatus(true)
-    PLAYER.setPlayerImage("/data/player.svg")
-    toggleEnemyAnimation(true)
-
-    proceedToNextLevel( GAME.loadLevel('current')! )
-})
-
-
 const displayItems = (): void => {
     const eq: Element[] = [...document.querySelector('aside.eq section.items')!.children]
 
@@ -161,14 +140,30 @@ const displayItems = (): void => {
 }
 
 
-const itemActiveToggler = (i: number, eq: Element[]): number => {
+const activeItemToggler = (i: number, eq: Element[], backwards?: boolean): void => {
     eq[i].classList.remove('active')
     
-    i = eq[i+1] ? i+1 : 0
+    if (backwards)
+        i = eq[i-1] ? i-1 : eq.length-1
+    else
+        i = eq[i+1] ? i+1 : 0
 
     eq[i].classList.add('active')
+}
 
-    return i
+
+const activeItemSelector = (backwards?: boolean): void => {
+    if (!item_toggle) 
+        return
+
+    item_toggle = false
+
+    const eq: Element[] = [...document.querySelector('aside.eq section.items')!.children]
+    let   i:  number    = eq.findIndex(x => x.classList.contains('active'))
+
+    activeItemToggler(i, eq, backwards)
+
+    setTimeout(() => item_toggle = true, 200);
 }
 
 
@@ -198,7 +193,12 @@ const collidedWithPlatform = (platform: Platform): void => {
             break
 
         case 'speed':
+            if (PLAYER.isEffectActive('speed'))
+                return
+
+            PLAYER.addActiveEffect('speed')
             PLAYER.setPlayerSpeed(DEFAULT_SPEED * 2)
+
             break
     }        
 }
@@ -212,7 +212,12 @@ const unCollidedWithPlatform = (platform: Platform): void => {
         switch (platform.getStats().name)
         {
             case 'speed':
+                if (PLAYER.isEffectActive('speed'))
+                    return
+
+                PLAYER.removeActiveEffect('speed')
                 PLAYER.setPlayerSpeed(DEFAULT_SPEED)
+
                 break
         }
     }
@@ -251,10 +256,36 @@ const collidedWithEnemy = (): void => {
     PLAYER.setPlayerImage("/data/player_mad.svg")
     toggleEnemyAnimation(false)
 
-    const h3: Element = document.createElement('h3')
-    h3.textContent    = 'You lost'
+    showLoseScreen()
+}
 
-    document.body.appendChild(h3)
+
+const showLoseScreen = (): void => {
+    const s:  HTMLElement = document.createElement('section'),
+          h3: HTMLElement = document.createElement('h3'),
+          d:  HTMLElement = document.createElement('div'),
+          b1: HTMLElement = document.createElement('button'),
+          b2: HTMLElement = document.createElement('button')
+
+    s.className = 'lost'
+
+    h3.textContent = "You lost"
+    b1.textContent = 'Restart'
+    b2.textContent = 'Menu'
+
+    b1.onclick = () => {
+        PLAYER.changePlayerMovementStatus(true)
+        PLAYER.setPlayerImage("/data/player.svg")
+
+        s.remove()
+        toggleEnemyAnimation(true)
+        proceedToNextLevel( GAME.loadLevel('current')! )
+    }
+
+    d.append(b1, b2)
+    s.append(h3, d)
+
+    document.body.append(s)
 }
 
 

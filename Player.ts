@@ -1,7 +1,7 @@
 import Entity from "./Entity.js";
 import { CollisionCb, EntityStats, Maybe } from "./interfaces/EntityTypes.js";
 import { CanvasStats, KeysInput } from "./interfaces/GameTypes.js";
-import { Bindings, PlayerPos } from "./interfaces/PlayerTypes.js";
+import { Bindings, PlayerPos, PlayerStats } from "./interfaces/PlayerTypes.js";
 import Item from "./Item.js";
 
 
@@ -13,6 +13,7 @@ class Player extends Entity
     private bindings:        Bindings
     private flat_bindings:   string[]
     private movementStatus:  boolean
+    private activeEffects:   string[]   
 
     private speedx:          number
     private jumpPower:       number
@@ -48,6 +49,7 @@ class Player extends Entity
 
         this.blockedKeys    = new Set<string>()
         this.movementStatus = true
+        this.activeEffects  = []
 
         this.bindings = {
             jump:  { keys: ['w', ' ', 'ArrowUp'], fn: ()=>{} },
@@ -404,12 +406,49 @@ class Player extends Entity
     }
 
 
+    public addActiveEffect(...effects: string[]): void
+    {
+        this.activeEffects.push(...effects)
+    }
+
+    
     public setPlayerImage(img: string): void
     {
         const i: HTMLImageElement = new Image();
 
         i.src = img
         i.onload = () => { this.image = i }
+    }
+
+
+    public getActiveEffects(): string[]
+    {
+        return this.activeEffects
+    }
+
+
+    public isEffectActive(effect: string): boolean
+    {
+        return this.activeEffects.includes(effect)
+    }
+
+
+    public removeActiveEffect(name: string): void
+    {
+        const i: number = this.activeEffects.findIndex(x => x === name)
+
+        if (i !== -1)
+            this.activeEffects.splice(i, 1)
+    }
+
+
+    public override getStats(): PlayerStats
+    {
+        return {
+            ...super.getStats(),
+            jump_power: this.jumpPower,
+            speed: this.speedx
+        }
     }
 }
 

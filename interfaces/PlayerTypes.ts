@@ -1,3 +1,5 @@
+import { EntityStats } from "./EntityTypes"
+
 export type MoveKeys = 'w' | 'a' | 's' | 'd'
 
 export type PlayerPos = {
@@ -12,4 +14,9 @@ export type Bind = {
 
 export type Bindings = {
     [key:string]: Bind
+}
+
+export type PlayerStats = EntityStats& {
+    speed:      number
+    jump_power: number
 }

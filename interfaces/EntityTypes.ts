@@ -32,11 +32,12 @@ export type AnimationPath = {
 }
 
 export type AnimationArg = {
-    speed: number
-    paths: AnimationPath[]
+    speed:          number
+    paths:          AnimationPath[]
+    interval_wait?: number
 } | null
 
 export type Maybe<T = string> = T | null | undefined
 
 export type Platforms = 'speed' | 'jump'
-export type Items = 'jump'
+export type Items = 'jump' | 'speed'

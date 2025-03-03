@@ -1,18 +1,19 @@
-import { AnimationArg, AnimationObject, AnimationPath, EntityStats, Maybe, OptionalArgs } from "./interfaces/EntityTypes"
+import { AnimationObject, AnimationPath, EntityStats, Maybe, OptionalArgs } from "./interfaces/EntityTypes"
 
 
 class Entity 
 {
-    protected id:        string
-    protected name:      Maybe
-    protected color:     Maybe
-    protected image:     Maybe<HTMLImageElement>
-    protected image_src: Maybe
-    protected x:         number
-    protected y:         number
-    protected w:         number
-    protected h:         number
-    protected animation: Maybe<AnimationObject>
+    protected id:             string
+    protected name:           Maybe
+    protected color:          Maybe
+    protected image:          Maybe<HTMLImageElement>
+    protected image_src:      Maybe
+    protected x:              number
+    protected y:              number
+    protected w:              number
+    protected h:              number
+    protected animation:      Maybe<AnimationObject>
+    protected animation_wait: boolean
 
 
     public constructor(x: number, y: number, w: number, h: number, args?: Maybe<OptionalArgs>)
@@ -37,9 +38,11 @@ class Entity
             }
         }
 
+        this.animation_wait = false
         this.animation = args?.animPath ? {
 
             speed: args.animPath.speed,
+            interval_wait: args.animPath.interval_wait,
             shouldMove: true,
             moveLevel: 1,
             paths: [
@@ -77,17 +80,26 @@ class Entity
 
 
     public draw(ctx: CanvasRenderingContext2D, color?: string, onlyBorders?: boolean): void {
-        if (this?.animation?.shouldMove && this.animation.paths.length > 1)
+        if (this?.animation?.shouldMove && this.animation.paths.length > 1 && !this.animation_wait)
         {
-            const {moveLevel, paths} = this.animation,
+            const {moveLevel, paths} = this.animation!,
                   currentPath        = paths[moveLevel]
 
             this.animationHandler('x', currentPath)
             this.animationHandler('y', currentPath)
 
             if (this.x === currentPath.x && this.y === currentPath.y)
-                this.animation.moveLevel = paths[moveLevel + 1] ? moveLevel + 1 : 0
+            {
+                this.animation_wait = true
+                
+                setTimeout(() => {
+                    this.animation!.moveLevel = paths[moveLevel + 1] ? moveLevel + 1 : 0
+                    this.animation_wait = false
+
+                }, this.animation.interval_wait ?? 0);
+            }
         }
+
 
         if (this.image)
         {

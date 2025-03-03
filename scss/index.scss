@@ -2,6 +2,7 @@
     margin: 0;
     padding: 0;
     font-weight: 400;
+    box-sizing: border-box;
 }
 
 body {
@@ -13,50 +14,13 @@ body {
     flex-direction: column;
     background: rgb(58, 58, 92);
     color: #eee;
-    font-family: Arial, Helvetica, sans-serif;
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
 
     main {
         display: flex;
         justify-content: space-between;
         width: 100%;
         height: 100%;
-
-        aside {
-            width: 20%;
-            background: rgb(50, 50, 81);
-
-            &.eq {
-                section.items {
-                    padding: 1em;
-                    display: flex;
-                    flex-wrap: wrap;
-                    justify-content: space-around;
-
-                    div {
-                        width: 28%;
-                        flex-shrink: 0;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        aspect-ratio: 1;
-                        margin-bottom: 1em;
-                        background: rgb(58, 58, 92);
-                        border-radius: .5em;
-                        border: 2px solid rgb(81, 81, 160);
-
-                        &.active { border-color: rgb(114, 150, 255); }
-
-                        img {
-                            object-fit: cover;
-                            width: 60%;
-                            height: 60%;
-
-                            &[src=""] { display: none; }
-                        }
-                    }
-                }
-            }
-        }
 
         section {
             &.lvl {
@@ -86,30 +50,23 @@ body {
 
                 canvas {
                     border: 2px solid #aaa;
-                    background: rgb(69, 79, 108);
+                    background: #454f6c;
                 }
             }
         }
-
-        button {
-            border-radius: .5em;
-            background: royalblue;
-            cursor: pointer;
-            font-size: .95rem;
-            padding: .75em;
-            outline: 0;
-            border: 0;
-            color: #fff;
-        }
     }
 
-    h3 {
-        position: absolute;
-        left: 50%;
-        top: 2em;
-        transform: translateX(-50%);
-        color: rgb(240, 9, 9);
-        font-size: 2rem;
-        font-weight: bold;
+    button {
+        border-radius: .25em;
+        outline: 0;
+        border: 0;
+        padding: .75em;
+        color: #eee;
+        font-size: 1.1rem;
+        background: rgb(65, 75, 103);
+        cursor: pointer;
+        transition: 250ms;
+
+        &:hover { background: darken(rgb(65, 75, 103), 2%); }
     }
 }

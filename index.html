@@ -8,6 +8,8 @@
     <link rel="stylesheet" href="css/index.css">
     <link rel="stylesheet" href="css/finish.css">
     <link rel="stylesheet" href="css/small.css">
+    <link rel="stylesheet" href="css/lost.css">
+    <link rel="stylesheet" href="css/aside.css">
     <script type="module" src="js/index.js" defer></script>
     <title>Platformer</title>
 </head>
@@ -17,6 +19,9 @@
     <main>
         
         <aside class="eq">
+
+            <p class="title">Items</p>
+
             <section class="items">
                 <div class="active"><img src=""></div>
                 <div><img src=""></div>
@@ -25,26 +30,40 @@
                 <div><img src=""></div>
                 <div><img src=""></div>
             </section>
+
+            <p class="title">Effects</p>
+
+            <section class="effects">
+                <div class="container effect-speed">
+                    <figure><img src="/data/items/item_speed.svg"></figure>
+                    <div class="bar"><div></div></div>
+                </div>
+            </section>
+
         </aside>
 
+
         <section class="game">
+
             <section class="level-info">
                 <section>
                     <h1>Level 1</h1>
                     <h2>Score: 0/10</h2>
                 </section>
-        
-                <button class="reset">Restart level</button>
             </section>
             
             <canvas></canvas>
+
         </section>
 
+
         <aside class="misc">
+
             <section class="lvl">
                 <button>Load level</button>
                 <input class="lvlinput" type="text">
             </section>
+
         </aside>
 
     </main>
