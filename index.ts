@@ -13,11 +13,11 @@ import LEVELS from "./levels/Levels.js"
 // ---------------------- CONSTS --------------------------
 
 const GAME:     Game = new Game(LEVELS),
-      CTX:      CanvasRenderingContext2D = GAME.getCtx(),
-      resetBtn: HTMLButtonElement = document.querySelector('button.reset')!;
+      CTX:      CanvasRenderingContext2D = GAME.getCtx()
 
 const DEFAULT_SPEED: number = 3,
-      DEFAULT_JUMP:  number = 5
+      DEFAULT_JUMP:  number = 5,
+      EQ_COOLDOWN:   number = 200
 
 // --------------------------------------------------------
 
@@ -31,10 +31,10 @@ const PLAYER: Player = new Player(210, 30, 40, 40, DEFAULT_SPEED, DEFAULT_JUMP)
 
 // ------------------- VARIABLES --------------------------
 
-let initPlayerPos: boolean      = false,
-    item_toggle:   boolean      = true,
-    currentLevel:  Maybe<Level> = GAME.loadLevel('current'),
-    collidedID:    Maybe        = null
+let g_initPlayerPos: boolean      = false,
+    g_item_toggle:   boolean      = true,
+    g_currentLevel:  Maybe<Level> = GAME.loadLevel('current'),
+    g_collidedID:    Maybe        = null
 
 // --------------------------------------------------------
 
@@ -42,14 +42,14 @@ let initPlayerPos: boolean      = false,
 GAME.setWidth(800, 600)
 
 GAME.update(() => {
-    if (currentLevel)
+    if (g_currentLevel)
     {
-        const { enemies, scores, surfaces, platforms, items } = currentLevel
+        const { enemies, scores, surfaces, platforms, items } = g_currentLevel
 
-        if (!initPlayerPos)
+        if (!g_initPlayerPos)
         {
-            PLAYER.setPlayerPos(currentLevel.player.x, currentLevel.player.y)
-            initPlayerPos = true
+            PLAYER.setPlayerPos(g_currentLevel.player.x, g_currentLevel.player.y)
+            g_initPlayerPos = true
         }
 
         for (const ent of enemies)
@@ -80,7 +80,7 @@ GAME.update(() => {
 })
 
 
-GAME.updateLevelStats(1, currentLevel?.scores.length ?? 0)
+GAME.updateLevelStats(1, g_currentLevel?.scores.length ?? 0)
 GAME.insufficientScreenHandler()
     
 PLAYER.initPressKeyEvents()
@@ -90,11 +90,11 @@ PLAYER.addBinding('item_scroll-backwards', ['q'], () => activeItemSelector(true)
 PLAYER.addBinding('item_scroll-forwards',  ['e'], () => activeItemSelector())
 
 PLAYER.addBinding('item_use', ['f'], () => {
-    if (!item_toggle) 
+    if (!g_item_toggle) 
         return
 
-    item_toggle = false
-    setTimeout(() => item_toggle = true, 100);
+    g_item_toggle = false
+    setTimeout(() => g_item_toggle = true, EQ_COOLDOWN);
 
     const eq: Element[] = [...document.querySelector('aside.eq section.items')!.children]
     let   i:  number    = eq.findIndex(x => x.classList.contains('active'))
@@ -110,7 +110,8 @@ PLAYER.addBinding('item_use', ['f'], () => {
         displayItems()
     }
 })
-
+// effect: if collided with an enemy, teleport to the second nearest platform
+// sqrt( (x2 - x1)^2 + (y2 - y1)^2 ) for each platform
 
 // --------------- Funcs ------------------
 
@@ -153,17 +154,17 @@ const activeItemToggler = (i: number, eq: Element[], backwards?: boolean): void 
 
 
 const activeItemSelector = (backwards?: boolean): void => {
-    if (!item_toggle) 
+    if (!g_item_toggle) 
         return
 
-    item_toggle = false
+    g_item_toggle = false
 
     const eq: Element[] = [...document.querySelector('aside.eq section.items')!.children]
     let   i:  number    = eq.findIndex(x => x.classList.contains('active'))
 
     activeItemToggler(i, eq, backwards)
 
-    setTimeout(() => item_toggle = true, 200);
+    setTimeout(() => g_item_toggle = true, EQ_COOLDOWN);
 }
 
 
@@ -174,29 +175,36 @@ const collidedWithItem = (item: Item): void => {
     const i: number = PLAYER.items.findIndex(x => !x)
     PLAYER.items[i] = item
 
-    currentLevel!.items = currentLevel!.items.filter(x => x.getStats().id !== item.getStats().id)
+    g_currentLevel!.items = g_currentLevel!.items.filter(x => x.getStats().id !== item.getStats().id)
     
     displayItems()
 }
 
 
 const collidedWithPlatform = (platform: Platform): void => {
-    collidedID = platform.getStats().id
+    g_collidedID = platform.getStats().id
 
     switch (platform.getStats().name as Platforms)
     {
         case 'jump':
+            const current_power: number = PLAYER.getStats().jump_power
+
+            if (PLAYER.isEffectActive('speed', true))
+                Item.zeroEffectContainer(PLAYER, 'speed')
+
             PLAYER.setPlayerJumpPower(10)
-            PLAYER.jump()
-            PLAYER.setPlayerJumpPower(DEFAULT_JUMP)
             PLAYER.setPlayerSpeed(DEFAULT_SPEED)
+            PLAYER.jump()
+
+            PLAYER.setPlayerJumpPower(PLAYER.isEffectActive('jumpboost') ? current_power : DEFAULT_JUMP)
+
             break
 
         case 'speed':
             if (PLAYER.isEffectActive('speed'))
                 return
 
-            PLAYER.addActiveEffect('speed')
+            PLAYER.addActiveEffect(['speed'])
             PLAYER.setPlayerSpeed(DEFAULT_SPEED * 2)
 
             break
@@ -205,14 +213,14 @@ const collidedWithPlatform = (platform: Platform): void => {
 
 
 const unCollidedWithPlatform = (platform: Platform): void => {
-    if (platform.getStats().id === collidedID)
+    if (platform.getStats().id === g_collidedID)
     {
-        collidedID = null
+        g_collidedID = null
 
         switch (platform.getStats().name)
         {
             case 'speed':
-                if (PLAYER.isEffectActive('speed'))
+                if (PLAYER.isEffectActive('speed', true))
                     return
 
                 PLAYER.removeActiveEffect('speed')
@@ -225,7 +233,7 @@ const unCollidedWithPlatform = (platform: Platform): void => {
 
 
 const collidedWithScore = (score: Score): void => {
-    GAME.handleGettingScore(currentLevel!, score)
+    GAME.handleGettingScore(g_currentLevel!, score)
 
     if (GAME.hasLevelBeenFinished()) 
     {
@@ -274,6 +282,7 @@ const showLoseScreen = (): void => {
     b2.textContent = 'Menu'
 
     b1.onclick = () => {
+        PLAYER.resetJumpState()
         PLAYER.changePlayerMovementStatus(true)
         PLAYER.setPlayerImage("/data/player.svg")
 
@@ -292,9 +301,10 @@ const showLoseScreen = (): void => {
 const proceedToNextLevel = (nextLevel: Level): void => {
     document.querySelector('h3')?.remove()
     
-    initPlayerPos = false
-    currentLevel  = nextLevel
+    g_initPlayerPos = false
+    g_currentLevel  = nextLevel
 
+    PLAYER.resetJumpState()
     PLAYER.setPlayerJumpPower(DEFAULT_JUMP)
     PLAYER.setPlayerSpeed(DEFAULT_SPEED)
 
@@ -328,6 +338,6 @@ const showFinishScreen = (): void => {
 
 
 const toggleEnemyAnimation = (val: boolean): void => {
-    for (const ent of currentLevel?.enemies ?? [])
+    for (const ent of g_currentLevel?.enemies ?? [])
         ent.toggleAnimation(val)
 }

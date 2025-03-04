@@ -39,5 +39,7 @@ export type AnimationArg = {
 
 export type Maybe<T = string> = T | null | undefined
 
+export type Effects = Items | Platforms
+
 export type Platforms = 'speed' | 'jump'
-export type Items = 'jump' | 'speed'
+export type Items = 'jump' | 'speed' | 'jumpboost'

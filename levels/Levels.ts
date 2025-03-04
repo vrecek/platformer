@@ -39,8 +39,8 @@ const LEVELS: Level[] = [
             new Item(150, 550, 'jump'),
             new Item(200, 550, 'jump'),
             new Item(250, 550, 'jump'),
-            new Item(300, 550, 'jump'),
-            new Item(350, 550, 'jump'),
+            new Item(300, 550, 'jumpboost'),
+            new Item(350, 550, 'jumpboost'),
             new Item(400, 550, 'speed'),
             new Item(450, 550, 'speed'),
         ]
@@ -124,7 +124,7 @@ const LEVELS: Level[] = [
             new Entity(240, 270, 40, 20, {
                 animPath: {
                     speed: 4, interval_wait: 500,
-                    paths: [{ x: 470, y: 270 }]
+                    paths: [{ x: 470, y: 260 }]
                 }
             }),
         ],

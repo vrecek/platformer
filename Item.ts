@@ -1,10 +1,13 @@
 import Entity from "./Entity.js";
-import { Items, Maybe } from "./interfaces/EntityTypes.js";
+import { Effects, Items, Maybe } from "./interfaces/EntityTypes.js";
+import { Fn, VoidFn } from "./interfaces/GameTypes.js";
 import Player from "./Player.js";
 
 
 class Item extends Entity
 {
+    private interval?:   number
+    private timeout?:    number
     private activate_fn: Maybe<(plr: Player, init_jump: number, init_speed: number) => boolean>
 
     
@@ -13,36 +16,70 @@ class Item extends Entity
         return (100 * interval_ms) / timeout_ms
     }
 
-    private getEffectContainer(effect: string, as_animation_bar?: boolean): HTMLElement
-    {
-        return document.querySelector(`section.effects div.effect-${effect} ${as_animation_bar ? "div.bar div" : ""}`)!
-    }
-
     private toggleEffectContainer(effect: string): void
     {
         this.getEffectContainer(effect).classList.toggle('active')
     }
 
+    private initEffect(plr: Player, effect: Effects, duration_l: number, interval_l: number, start_fn: Fn<boolean>, end_fn: Fn): boolean
+    {
+        if (plr.isEffectActive(effect))
+            return false
+
+        const container: HTMLElement = this.getEffectContainer(effect, true),
+              step:      number      = this.calculateAnimationStep(duration_l, interval_l)
+
+        let width: number = 100
+
+        const result: boolean = start_fn()
+
+        if (!result) 
+            return false
+
+        this.toggleEffectContainer(effect)
+        plr.addActiveEffect([effect], this)
+
+        this.timeout = setTimeout(() => {
+            Item.zeroEffectContainer(plr, effect)
+            end_fn()
+
+        }, duration_l);
+
+        this.interval = setInterval(() => container.style.width = `${width -= step}%`, interval_l);
+
+        return true
+    }
+
 
     public constructor(x: number, y: number, type: Items)
     {        
-        const INTERVAL_LENGTH: number = 50
-        let   image:           string = ""
-        // clear animation if "jump" or block jumping
+        const INTERVAL_LENGTH: number = 50,
+              SIZE:            number = 30
+
+        let image:           string = ""
+        let DURATION_LENGTH: number = 0
+
+
         switch (type)
         {
             case 'jump': 
                 image = '/data/items/item_jump.svg'; 
-                super(x, y, 30, 30, {image, name: type})
+                super(x, y, SIZE, SIZE, {image, name: type})
 
                 this.activate_fn = (plr: Player, init_jump: number, init_speed: number) => {
                     if (!plr.isTouchingGround())
                         return false
 
+                    const current_power: number = plr.getStats().jump_power
+
+                    if (plr.isEffectActive('speed', true))
+                        Item.zeroEffectContainer(plr, 'speed')
+
                     plr.setPlayerJumpPower(10)
-                    plr.jump()
-                    plr.setPlayerJumpPower(init_jump)
                     plr.setPlayerSpeed(init_speed)
+                    plr.jump()
+
+                    plr.setPlayerJumpPower(plr.isEffectActive('jumpboost') ? current_power : init_jump)
 
                     return true
                 }
@@ -50,42 +87,42 @@ class Item extends Entity
                 break
 
 
+            case 'jumpboost': 
+                DURATION_LENGTH = 4000
+                image           = '/data/items/item_jumpboost.svg'
+
+                super(x, y, SIZE, SIZE, {image, name: type})
+
+                this.activate_fn = (plr: Player, init_jump: number): boolean => {
+                    return this.initEffect(plr, type, DURATION_LENGTH, INTERVAL_LENGTH, () => {
+                            
+                        plr.setPlayerJumpPower(10)
+
+                        return true
+
+                    }, () => plr.setPlayerJumpPower(init_jump))
+                }
+
+                break
+
+
             case 'speed':
-                const DURATION_LENGTH: number = 2000
+                DURATION_LENGTH = 4000
+                image           = '/data/items/item_speed.svg'
 
-                image = '/data/items/item_speed.svg'; 
-                super(x, y, 30, 30, {image, name: type})
+                super(x, y, SIZE, SIZE, {image, name: type})
 
-                this.activate_fn = (plr: Player, _, init_speed: number) => {
-                    if (plr.isEffectActive('speed') || !plr.isTouchingGround())
-                        return false
+                this.activate_fn = (plr: Player, _, init_speed: number): boolean => {
+                    return this.initEffect(plr, type, DURATION_LENGTH, INTERVAL_LENGTH, () => {
 
-                    const container: HTMLElement = this.getEffectContainer('speed', true),
-                          step:      number      = this.calculateAnimationStep(DURATION_LENGTH, INTERVAL_LENGTH)
+                        if (!plr.isTouchingGround())
+                            return false
 
-                    let interval: number,
-                        width:    number = 100
+                        plr.setPlayerSpeed(init_speed * 2)
 
+                        return true
 
-                    this.toggleEffectContainer(type)
-
-                    plr.addActiveEffect('speed')
-                    plr.setPlayerSpeed(init_speed * 2)
-
-                    setTimeout(() => {
-                        clearInterval(interval)
-
-                        container.style.width = '0'
-                        this.toggleEffectContainer(type)
-
-                        plr.setPlayerSpeed(init_speed)
-                        plr.removeActiveEffect('speed')
-
-                    }, DURATION_LENGTH);
-
-                    interval = setInterval(() => container.style.width = `${width -= step}%`, INTERVAL_LENGTH);
-
-                    return true
+                    }, () => plr.setPlayerSpeed(init_speed))
                 }
 
                 break
@@ -101,6 +138,36 @@ class Item extends Entity
     public activate(plr: Player, init_jump: number, init_speed: number): boolean
     {
         return this.activate_fn?.(plr, init_jump, init_speed) ?? false
+    }
+
+
+    public cancel_timers(): void
+    {
+        clearInterval(this.interval)
+        clearTimeout(this.timeout)
+    }
+
+
+    public getEffectContainer(effect: string, as_animation_bar?: boolean): HTMLElement
+    {
+        return document.querySelector(`section.effects div.effect-${effect} ${as_animation_bar ? "div.bar div" : ""}`)!
+    }
+
+
+    public static zeroEffectContainer(plr: Player, effect: string): void
+    {
+        const item: Maybe<Item>    = plr.getActiveItem(effect),
+              cont: Maybe<Element> = item?.getEffectContainer(effect)
+                        
+        if (!item || !cont)
+            return
+
+        item.cancel_timers()
+
+        cont.classList.remove('active');
+        (cont.children[1].children[0] as HTMLElement).style.width = '0'
+
+        plr.removeActiveEffect(effect, true)
     }
 }
 

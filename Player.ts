@@ -1,5 +1,5 @@
 import Entity from "./Entity.js";
-import { CollisionCb, EntityStats, Maybe } from "./interfaces/EntityTypes.js";
+import { CollisionCb, Effects, EntityStats, Maybe } from "./interfaces/EntityTypes.js";
 import { CanvasStats, KeysInput } from "./interfaces/GameTypes.js";
 import { Bindings, PlayerPos, PlayerStats } from "./interfaces/PlayerTypes.js";
 import Item from "./Item.js";
@@ -13,7 +13,8 @@ class Player extends Entity
     private bindings:        Bindings
     private flat_bindings:   string[]
     private movementStatus:  boolean
-    private activeEffects:   string[]   
+    private activeEffects:   string[]  
+    public activeItems:     Item[] 
 
     private speedx:          number
     private jumpPower:       number
@@ -50,6 +51,7 @@ class Player extends Entity
         this.blockedKeys    = new Set<string>()
         this.movementStatus = true
         this.activeEffects  = []
+        this.activeItems    = []
 
         this.bindings = {
             jump:  { keys: ['w', ' ', 'ArrowUp'], fn: ()=>{} },
@@ -88,14 +90,6 @@ class Player extends Entity
             this.initVelocity *= this.friction
             this.y            -= this.initVelocity
         }
-    }
-
-    private resetJumpState(): void 
-    {
-        this.isJumping      = false
-        this.isFalling      = false
-        this.initVelocity   = this.jumpPower
-        this.finishVelocity = this.INIT_FINISH_VEL
     }
 
     private checkMovementCondition(): boolean 
@@ -365,6 +359,15 @@ class Player extends Entity
     }
 
 
+    public resetJumpState(): void 
+    {
+        this.isJumping      = false
+        this.isFalling      = false
+        this.initVelocity   = this.jumpPower
+        this.finishVelocity = this.INIT_FINISH_VEL
+    }
+    
+
     public getMovementStatus(): boolean
     {
         return this.movementStatus
@@ -406,9 +409,10 @@ class Player extends Entity
     }
 
 
-    public addActiveEffect(...effects: string[]): void
+    public addActiveEffect(effects: string[], item?: Item): void
     {
         this.activeEffects.push(...effects)
+        item && this.activeItems.push(item)
     }
 
     
@@ -421,24 +425,25 @@ class Player extends Entity
     }
 
 
-    public getActiveEffects(): string[]
+    public getActiveItem(effect: string): Maybe<Item>
     {
-        return this.activeEffects
+        return this.activeItems.filter(x => x.getStats().name === effect)?.[0]
     }
 
 
-    public isEffectActive(effect: string): boolean
+    public isEffectActive(effect: Effects, with_item?: boolean): boolean
     {
-        return this.activeEffects.includes(effect)
+        return this.activeEffects.includes(effect) 
+               && (with_item ? this.activeItems.some(x => x.getStats().name === effect) : true)
     }
 
 
-    public removeActiveEffect(name: string): void
+    public removeActiveEffect(name: string, from_items?: boolean): void
     {
-        const i: number = this.activeEffects.findIndex(x => x === name)
+        this.activeEffects = this.activeEffects.filter(x => x !== name)
 
-        if (i !== -1)
-            this.activeEffects.splice(i, 1)
+        if (from_items)
+            this.activeItems = this.activeItems.filter(x => x.getStats().name !== name)
     }
 
 

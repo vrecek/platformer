@@ -4,6 +4,7 @@ import Score from "../Score"
 
 
 export type VoidFn = () => void
+export type Fn<T = void> = () => T
 
 export type KeysInput = {
     pressed: boolean
