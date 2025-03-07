@@ -12,8 +12,8 @@ import LEVELS from "./levels/Levels.js"
 
 // ---------------------- CONSTS --------------------------
 
-const GAME:     Game = new Game(LEVELS),
-      CTX:      CanvasRenderingContext2D = GAME.getCtx()
+const GAME: Game = new Game(LEVELS),
+      CTX:  CanvasRenderingContext2D = GAME.getCtx()
 
 const DEFAULT_SPEED: number = 3,
       DEFAULT_JUMP:  number = 5,
@@ -34,7 +34,7 @@ const PLAYER: Player = new Player(210, 30, 40, 40, DEFAULT_SPEED, DEFAULT_JUMP)
 let g_initPlayerPos: boolean      = false,
     g_item_toggle:   boolean      = true,
     g_currentLevel:  Maybe<Level> = GAME.loadLevel('current'),
-    g_collidedID:    Maybe        = null
+    g_collidedE:     Maybe        = null
 
 // --------------------------------------------------------
 
@@ -68,7 +68,7 @@ GAME.update(() => {
         PLAYER.resetBlockedKeys()
 
         PLAYER.checkCollision(platforms, collidedWithPlatform, unCollidedWithPlatform)
-        PLAYER.checkCollision(enemies, collidedWithEnemy)
+        PLAYER.checkCollision(enemies, collidedWithEnemy, unCollidedWithEnemy)
         PLAYER.checkCollision(surfaces, collidedWithSurface)
         PLAYER.checkCollision(scores, collidedWithScore)
         PLAYER.checkCollision(items, collidedWithItem as CollisionCb)
@@ -110,8 +110,7 @@ PLAYER.addBinding('item_use', ['f'], () => {
         displayItems()
     }
 })
-// effect: if collided with an enemy, teleport to the second nearest platform
-// sqrt( (x2 - x1)^2 + (y2 - y1)^2 ) for each platform
+
 
 // --------------- Funcs ------------------
 
@@ -175,15 +174,13 @@ const collidedWithItem = (item: Item): void => {
     const i: number = PLAYER.items.findIndex(x => !x)
     PLAYER.items[i] = item
 
-    g_currentLevel!.items = g_currentLevel!.items.filter(x => x.getStats().id !== item.getStats().id)
+    g_currentLevel!.items = PLAYER.delete_entity(g_currentLevel!.items, item.getStats().id)
     
     displayItems()
 }
 
 
 const collidedWithPlatform = (platform: Platform): void => {
-    g_collidedID = platform.getStats().id
-
     switch (platform.getStats().name as Platforms)
     {
         case 'jump':
@@ -213,27 +210,23 @@ const collidedWithPlatform = (platform: Platform): void => {
 
 
 const unCollidedWithPlatform = (platform: Platform): void => {
-    if (platform.getStats().id === g_collidedID)
+    switch (platform.getStats().name)
     {
-        g_collidedID = null
+        case 'speed':
+            if (PLAYER.isEffectActive('speed', true))
+                return
 
-        switch (platform.getStats().name)
-        {
-            case 'speed':
-                if (PLAYER.isEffectActive('speed', true))
-                    return
+            PLAYER.removeActiveEffect('speed')
+            PLAYER.setPlayerSpeed(DEFAULT_SPEED)
 
-                PLAYER.removeActiveEffect('speed')
-                PLAYER.setPlayerSpeed(DEFAULT_SPEED)
-
-                break
-        }
+            break
     }
 }
 
 
 const collidedWithScore = (score: Score): void => {
-    GAME.handleGettingScore(g_currentLevel!, score)
+    GAME.updateScoreText(1)
+    g_currentLevel!.scores = PLAYER.delete_entity(g_currentLevel!.scores, score.getStats().id)
 
     if (GAME.hasLevelBeenFinished()) 
     {
@@ -256,12 +249,31 @@ const collidedWithSurface = (ent: Entity): void => {
 }
 
 
-const collidedWithEnemy = (): void => {
-    if (document.querySelector('h3')) 
+const unCollidedWithEnemy = (): void => {
+    g_collidedE = null
+    PLAYER.setImage("/data/player.svg")
+}
+
+
+const collidedWithEnemy = (enemy: Entity): void => {
+    if (document.querySelector('h3')) return
+
+    if (PLAYER.isEffectActive('invincibility'))
+    {
+        if (!g_collidedE)
+        {
+            g_collidedE = enemy.getStats().id
+            PLAYER.setImage("/data/player_immortal.svg")
+        }
+
         return
+    }
+
+    for (const x of PLAYER.getActiveEffects())
+        Item.zeroEffectContainer(PLAYER, x)
 
     PLAYER.changePlayerMovementStatus(false)
-    PLAYER.setPlayerImage("/data/player_mad.svg")
+    PLAYER.setImage("/data/player_dead.svg")
     toggleEnemyAnimation(false)
 
     showLoseScreen()
@@ -284,7 +296,7 @@ const showLoseScreen = (): void => {
     b1.onclick = () => {
         PLAYER.resetJumpState()
         PLAYER.changePlayerMovementStatus(true)
-        PLAYER.setPlayerImage("/data/player.svg")
+        PLAYER.setImage("/data/player.svg")
 
         s.remove()
         toggleEnemyAnimation(true)
@@ -304,9 +316,9 @@ const proceedToNextLevel = (nextLevel: Level): void => {
     g_initPlayerPos = false
     g_currentLevel  = nextLevel
 
-    PLAYER.resetJumpState()
     PLAYER.setPlayerJumpPower(DEFAULT_JUMP)
     PLAYER.setPlayerSpeed(DEFAULT_SPEED)
+    PLAYER.resetJumpState()
 
     GAME.updateScoreText()
 }

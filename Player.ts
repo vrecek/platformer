@@ -14,7 +14,9 @@ class Player extends Entity
     private flat_bindings:   string[]
     private movementStatus:  boolean
     private activeEffects:   string[]  
-    public activeItems:     Item[] 
+    private activeItems:     Item[] 
+
+    private collisions:      string[]
 
     private speedx:          number
     private jumpPower:       number
@@ -29,7 +31,7 @@ class Player extends Entity
     private initVelocity:    number
     private finishVelocity:  number
 
-    public items: (Item|null)[]
+    public items: (Item | null)[]
 
 
     public constructor(x: number, y: number, w: number, h: number, speed: number, jumpPower: number)
@@ -41,6 +43,8 @@ class Player extends Entity
 
         this.isJumping = false
         this.isFalling = false
+
+        this.collisions = []
 
         this.initVelocity   = jumpPower 
         this.finishVelocity = this.INIT_FINISH_VEL
@@ -54,7 +58,7 @@ class Player extends Entity
         this.activeItems    = []
 
         this.bindings = {
-            jump:  { keys: ['w', ' ', 'ArrowUp'], fn: ()=>{} },
+            jump:  { keys: ['w', ' ', 'ArrowUp'], fn: ()=>{ (!this.isJumping && !this.isFalling) && this.jump() } },
             left:  { keys: ['a', 'ArrowLeft'],    fn: ()=>{ this.x -= this.speedx } },
             right: { keys: ['d', 'ArrowRight'],   fn: ()=>{ this.x += this.speedx } },
         }
@@ -70,10 +74,9 @@ class Player extends Entity
     }
 
 
-    private handleJumping(force?: boolean): void 
+    private handleJumping(jump?: boolean): void 
     {
-        if (force || (this.checkBinding('jump') && !this.isJumping && !this.isFalling))
-            this.isJumping = true
+        if (jump) this.isJumping = true
 
         if (!this.isJumping || !this.movementStatus || this.isFalling) 
             return
@@ -140,21 +143,37 @@ class Player extends Entity
     }
 
 
+    public delete_entity<T extends Entity>(arr: T[], del_id: string): T[]
+    {
+        if (this.collisions.includes(del_id))
+            this.collisions.splice(this.collisions.findIndex(e => e === del_id), 1)
+
+        return arr.filter(x => x.getStats().id !== del_id)
+    }
+
+
     public checkCollision(entities: Entity[], collidedFn?: CollisionCb, uncollidedFn?: Maybe<CollisionCb>): Entity | null {
         let collidedEntity: Entity | null = null
 
         for (const ent of entities) 
         {
-            const { x, y, w, h } = ent.getStats()
+            const { x, y, w, h, id } = ent.getStats()
 
             if ( ((this.x + this.w >= x) && (this.y + this.h >= y)) && ((this.x <= x + w) && (this.y <= y + h)) )
             {
-                collidedFn && collidedFn(ent)
-
                 collidedEntity = ent
+
+                if (this.collisions.every(x => x !== id))
+                    this.collisions.push(id)
+
+                collidedFn && collidedFn(ent)
             }
-            else 
+            else if (this.collisions.includes(id)) 
+            {
+                this.collisions.splice(this.collisions.findIndex(e => e === id), 1)
+
                 uncollidedFn && uncollidedFn(ent)
+            }
         }
 
         return collidedEntity
@@ -364,9 +383,9 @@ class Player extends Entity
         this.isJumping      = false
         this.isFalling      = false
         this.initVelocity   = this.jumpPower
-        this.finishVelocity = this.INIT_FINISH_VEL
+        this.finishVelocity = this.jumpPower / 10
     }
-    
+
 
     public getMovementStatus(): boolean
     {
@@ -415,15 +434,6 @@ class Player extends Entity
         item && this.activeItems.push(item)
     }
 
-    
-    public setPlayerImage(img: string): void
-    {
-        const i: HTMLImageElement = new Image();
-
-        i.src = img
-        i.onload = () => { this.image = i }
-    }
-
 
     public getActiveItem(effect: string): Maybe<Item>
     {
@@ -444,6 +454,12 @@ class Player extends Entity
 
         if (from_items)
             this.activeItems = this.activeItems.filter(x => x.getStats().name !== name)
+    }
+
+
+    public getActiveEffects(): string[]
+    {
+        return this.activeEffects
     }
 
 

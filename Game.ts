@@ -109,14 +109,6 @@ class Game
     }
 
 
-    public handleGettingScore(level: Level, ent: Entity): void
-    {
-        this.updateScoreText(1)
-        
-        level.scores = level.scores.filter(x => x.getStats().id !== ent.getStats().id)
-    }
-
-
     public hasLevelBeenFinished(): boolean
     {
         return this.points === this.totalPoints

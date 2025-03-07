@@ -23,18 +23,13 @@ class Item extends Entity
 
     private initEffect(plr: Player, effect: Effects, duration_l: number, interval_l: number, start_fn: Fn<boolean>, end_fn: Fn): boolean
     {
-        if (plr.isEffectActive(effect))
+        if (plr.isEffectActive(effect) || !start_fn())
             return false
 
         const container: HTMLElement = this.getEffectContainer(effect, true),
               step:      number      = this.calculateAnimationStep(duration_l, interval_l)
 
         let width: number = 100
-
-        const result: boolean = start_fn()
-
-        if (!result) 
-            return false
 
         this.toggleEffectContainer(effect)
         plr.addActiveEffect([effect], this)
@@ -97,7 +92,6 @@ class Item extends Entity
                     return this.initEffect(plr, type, DURATION_LENGTH, INTERVAL_LENGTH, () => {
                             
                         plr.setPlayerJumpPower(10)
-
                         return true
 
                     }, () => plr.setPlayerJumpPower(init_jump))
@@ -123,6 +117,22 @@ class Item extends Entity
                         return true
 
                     }, () => plr.setPlayerSpeed(init_speed))
+                }
+
+                break
+
+
+            case 'invincibility':
+                DURATION_LENGTH = 4000
+                image           = '/data/items/item_invincibility.svg'
+
+                super(x, y, SIZE, SIZE, {image, name: type})
+
+                this.activate_fn = (plr: Player): boolean => {
+                    return this.initEffect(plr, type, DURATION_LENGTH, INTERVAL_LENGTH, () => {
+                        return true
+                        
+                    }, () => {})
                 }
 
                 break

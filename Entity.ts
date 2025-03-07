@@ -16,6 +16,7 @@ class Entity
     protected animation_wait: boolean
 
 
+
     public constructor(x: number, y: number, w: number, h: number, args?: Maybe<OptionalArgs>)
     {
         this.id    = Math.random().toString().slice(2)
@@ -28,15 +29,7 @@ class Entity
         this.h = h
 
         if (args?.image)
-        {
-            const i: HTMLImageElement = new Image();
-
-            i.src = args.image
-            i.onload = () => {
-                this.image = i
-                this.image_src = args.image
-            }
-        }
+            this.setImage(args.image)
 
         this.animation_wait = false
         this.animation = args?.animPath ? {
@@ -145,6 +138,18 @@ class Entity
         if (!this.animation) return
             
         this.animation.shouldMove = val
+    }
+
+
+    public setImage(img_path: string): void
+    {
+        const i: HTMLImageElement = new Image();
+
+        i.src = img_path
+        i.onload = () => {
+            this.image = i
+            this.image_src = img_path
+        }
     }
 }
 
