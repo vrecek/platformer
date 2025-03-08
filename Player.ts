@@ -1,7 +1,7 @@
 import Entity from "./Entity.js";
 import { CollisionCb, Effects, EntityStats, Maybe } from "./interfaces/EntityTypes.js";
 import { CanvasStats, KeysInput } from "./interfaces/GameTypes.js";
-import { Bindings, PlayerPos, PlayerStats } from "./interfaces/PlayerTypes.js";
+import { Bindings, PlayerEq, PlayerPos, PlayerStats } from "./interfaces/PlayerTypes.js";
 import Item from "./Item.js";
 
 
@@ -31,8 +31,14 @@ class Player extends Entity
     private initVelocity:    number
     private finishVelocity:  number
 
-    public items: (Item | null)[]
+    // public items:       (Item | null)[]
+    private curr_items:  PlayerEq
+    private start_items: PlayerEq
 
+
+    public get items(): PlayerEq {
+        return this.curr_items
+    }
 
     public constructor(x: number, y: number, w: number, h: number, speed: number, jumpPower: number)
     {
@@ -50,7 +56,8 @@ class Player extends Entity
         this.finishVelocity = this.INIT_FINISH_VEL
         this.friction       = .925
 
-        this.items = new Array(6).fill(null)
+        this.curr_items  = new Array(6).fill(null)
+        this.start_items = [...this.items]
 
         this.blockedKeys    = new Set<string>()
         this.movementStatus = true
@@ -425,6 +432,31 @@ class Player extends Entity
     public setPlayerSpeed(speed: number): void
     {
         this.speedx = speed
+    }
+
+
+    public setItem(index: number, item: Item): void
+    {
+        this.curr_items[index]  = item
+        this.start_items[index] = item
+    }
+
+    
+    public clearItem(index: number): void
+    {
+        this.curr_items[index] = null
+    }
+
+
+    public reloadItems(): void
+    {
+        this.curr_items = [...this.start_items]
+    }
+
+
+    public resetItems(): void
+    {
+        this.start_items = [...this.curr_items]
     }
 
 

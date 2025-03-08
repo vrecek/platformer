@@ -104,7 +104,7 @@ PLAYER.addBinding('item_use', ['f'], () => {
         if ( !PLAYER.items[i]?.activate(PLAYER, DEFAULT_JUMP, DEFAULT_SPEED) )
             return
 
-        PLAYER.items[i] = null
+        PLAYER.clearItem(i)
 
         activeItemToggler(i, eq)
         displayItems()
@@ -172,7 +172,7 @@ const collidedWithItem = (item: Item): void => {
         return
 
     const i: number = PLAYER.items.findIndex(x => !x)
-    PLAYER.items[i] = item
+    PLAYER.setItem(i, item)
 
     g_currentLevel!.items = PLAYER.delete_entity(g_currentLevel!.items, item.getStats().id)
     
@@ -294,11 +294,12 @@ const showLoseScreen = (): void => {
     b2.textContent = 'Menu'
 
     b1.onclick = () => {
-        PLAYER.resetJumpState()
         PLAYER.changePlayerMovementStatus(true)
         PLAYER.setImage("/data/player.svg")
+        PLAYER.reloadItems()
 
         s.remove()
+        displayItems()
         toggleEnemyAnimation(true)
         proceedToNextLevel( GAME.loadLevel('current')! )
     }
@@ -312,13 +313,14 @@ const showLoseScreen = (): void => {
 
 const proceedToNextLevel = (nextLevel: Level): void => {
     document.querySelector('h3')?.remove()
-    
-    g_initPlayerPos = false
-    g_currentLevel  = nextLevel
 
     PLAYER.setPlayerJumpPower(DEFAULT_JUMP)
     PLAYER.setPlayerSpeed(DEFAULT_SPEED)
+    PLAYER.resetItems()
     PLAYER.resetJumpState()
+    
+    g_initPlayerPos = false
+    g_currentLevel  = nextLevel
 
     GAME.updateScoreText()
 }

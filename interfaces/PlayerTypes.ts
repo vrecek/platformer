@@ -1,3 +1,4 @@
+import Item from "../Item"
 import { EntityStats } from "./EntityTypes"
 
 export type MoveKeys = 'w' | 'a' | 's' | 'd'
@@ -20,3 +21,5 @@ export type PlayerStats = EntityStats& {
     speed:      number
     jump_power: number
 }
+
+export type PlayerEq = (Item | null)[]

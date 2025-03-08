@@ -3,17 +3,19 @@ import { AnimationObject, AnimationPath, EntityStats, Maybe, OptionalArgs } from
 
 class Entity 
 {
-    protected id:             string
-    protected name:           Maybe
-    protected color:          Maybe
-    protected image:          Maybe<HTMLImageElement>
-    protected image_src:      Maybe
-    protected x:              number
-    protected y:              number
-    protected w:              number
-    protected h:              number
-    protected animation:      Maybe<AnimationObject>
-    protected animation_wait: boolean
+    private image:          Maybe<HTMLImageElement>
+    private animation:      Maybe<AnimationObject>
+    private animation_wait: boolean
+
+    protected id:        string
+    protected name:      Maybe
+    protected color:     Maybe
+    protected image_src: Maybe
+    protected x:         number
+    protected y:         number
+    protected w:         number
+    protected h:         number
+    
 
 
 
@@ -72,7 +74,8 @@ class Entity
     }
 
 
-    public draw(ctx: CanvasRenderingContext2D, color?: string, onlyBorders?: boolean): void {
+    public draw(ctx: CanvasRenderingContext2D, color?: string, onlyBorders?: boolean): void
+    {
         if (this?.animation?.shouldMove && this.animation.paths.length > 1 && !this.animation_wait)
         {
             const {moveLevel, paths} = this.animation!,
@@ -133,11 +136,11 @@ class Entity
     }
 
 
-    public toggleAnimation(val: boolean): void
+    public toggleAnimation(should_move: boolean): void
     {
         if (!this.animation) return
             
-        this.animation.shouldMove = val
+        this.animation.shouldMove = should_move
     }
 
 
