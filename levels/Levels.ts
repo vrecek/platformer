@@ -40,10 +40,10 @@ const LEVELS: Level[] = [
         ],
         items: [
             new Item(150, 550, 'jump'),
-            new Item(200, 550, 'jump'),
+            new Item(200, 550, 'attackdmg'),
             new Item(250, 550, 'invincibility'),
             new Item(300, 550, 'jumpboost'),
-            new Item(350, 550, 'jumpboost'),
+            new Item(350, 550, 'attackspeed'),
             new Item(400, 550, 'speed'),
             new Item(450, 550, 'speed'),
         ]

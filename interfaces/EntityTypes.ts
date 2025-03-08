@@ -2,10 +2,23 @@ import Entity from "../ts/entities/Entity"
 
 
 export type OptionalArgs = {
-    name?:     Maybe
-    color?:    Maybe
-    image?:    Maybe
-    animPath?: AnimationArg
+    name?:         Maybe
+    color?:        Maybe
+    image?:        Maybe
+    animPath?:     Maybe<AnimationArg>
+    act_defaults?: Maybe<ActionDefaults> 
+}
+
+export type EntityPos = {
+    x: number
+    y: number
+}
+
+export type ActionDefaults = {
+    shoot_cd?:     number
+    bullet_dmg?:   number
+    bullet_speed?: number
+    health?:       number
 }
 
 export type EntityStats = {
@@ -42,7 +55,7 @@ export type Maybe<T = string> = T | null | undefined
 export type Effects = Items | Platforms
 
 export type Platforms = 'speed' | 'jump'
-export type Items = 'jump' | 'speed' | 'jumpboost' | 'invincibility'
+export type Items = 'jump' | 'speed' | 'jumpboost' | 'invincibility' | 'attackspeed' | 'attackdmg'
 
 export type Pos = {
     x: number
@@ -50,3 +63,10 @@ export type Pos = {
     w: number
     h: number
 }
+
+export type Bullet = {
+    obj: Entity
+    dir: BulletDirection
+}
+
+export type BulletDirection = 1 | -1

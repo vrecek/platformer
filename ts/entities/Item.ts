@@ -2,13 +2,14 @@ import Entity from "./Entity.js";
 import { Effects, Items, Maybe } from "../../interfaces/EntityTypes.js";
 import { Fn, VoidFn } from "../../interfaces/GameTypes.js";
 import Player from "./Player.js";
+import { ActivationObject } from "../../interfaces/PlayerTypes.js";
 
 
 class Item extends Entity
 {
     private interval?:   number
     private timeout?:    number
-    private activate_fn: Maybe<(plr: Player, init_jump: number, init_speed: number) => boolean>
+    private activate_fn: Maybe<(plr: Player, details: ActivationObject) => boolean>
 
     
     private calculateAnimationStep(timeout_ms: number, interval_ms: number): number
@@ -61,7 +62,7 @@ class Item extends Entity
                 image = '/data/items/item_jump.svg'; 
                 super(x, y, SIZE, SIZE, {image, name: type})
 
-                this.activate_fn = (plr: Player, init_jump: number, init_speed: number) => {
+                this.activate_fn = (plr: Player, {init_jump, init_speed}) => {
                     if (!plr.isTouchingGround())
                         return false
 
@@ -88,7 +89,7 @@ class Item extends Entity
 
                 super(x, y, SIZE, SIZE, {image, name: type})
 
-                this.activate_fn = (plr: Player, init_jump: number): boolean => {
+                this.activate_fn = (plr: Player, {init_jump}): boolean => {
                     return this.initEffect(plr, type, DURATION_LENGTH, INTERVAL_LENGTH, () => {
                             
                         plr.setPlayerJumpPower(10)
@@ -106,7 +107,7 @@ class Item extends Entity
 
                 super(x, y, SIZE, SIZE, {image, name: type})
 
-                this.activate_fn = (plr: Player, _, init_speed: number): boolean => {
+                this.activate_fn = (plr: Player, {init_speed}): boolean => {
                     return this.initEffect(plr, type, DURATION_LENGTH, INTERVAL_LENGTH, () => {
 
                         if (!plr.isTouchingGround())
@@ -138,6 +139,49 @@ class Item extends Entity
                 break
 
 
+            case 'attackspeed':
+                DURATION_LENGTH = 4000
+                image           = '/data/items/item_rifle.svg'
+
+                super(x, y, SIZE, SIZE, {image, name: type})
+
+                this.activate_fn = (plr: Player, {init_attcd, init_bltspd}): boolean => {
+                    return this.initEffect(plr, type, DURATION_LENGTH, INTERVAL_LENGTH, () => {
+                        plr.setAttackCooldown(200)
+                        plr.setBulletSpeed(9)
+                        return true
+                        
+                    }, () => {
+                        plr.setAttackCooldown(init_attcd)
+                        plr.setBulletSpeed(init_bltspd)
+                    })
+                }
+
+                break
+
+
+            case 'attackdmg':
+                DURATION_LENGTH = 4000
+                image           = '/data/items/item_damage.svg'
+
+                super(x, y, SIZE, SIZE, {image, name: type})
+
+                this.activate_fn = (plr: Player, {init_attdmg}): boolean => {
+                    return this.initEffect(plr, type, DURATION_LENGTH, INTERVAL_LENGTH, () => {
+                        plr.setAttackDamage(5)
+                        plr.setImage('/data/player/player_mad.svg')
+
+                        return true
+                        
+                    }, () => {
+                        plr.setAttackDamage(init_attdmg)
+                        plr.setImage('/data/player/player.svg')
+                    })
+                }
+
+                break
+
+
             default:
                 super(x, y, 40, 40, {image, name: type})
                 this.activate_fn = null
@@ -145,9 +189,9 @@ class Item extends Entity
     }
 
 
-    public activate(plr: Player, init_jump: number, init_speed: number): boolean
+    public activate(plr: Player, details: ActivationObject): boolean
     {
-        return this.activate_fn?.(plr, init_jump, init_speed) ?? false
+        return this.activate_fn?.(plr, details) ?? false
     }
 
 

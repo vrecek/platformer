@@ -1,4 +1,4 @@
-import { AnimationObject, AnimationPath, CollisionCb, EntityStats, Maybe, OptionalArgs } from "../../interfaces/EntityTypes"
+import { AnimationObject, AnimationPath, CollisionCb, EntityPos, EntityStats, Maybe, OptionalArgs } from "../../interfaces/EntityTypes"
 
 
 class Entity 
@@ -148,7 +148,7 @@ class Entity
     public setImage(img_path: string): void
     {
         const i: HTMLImageElement = new Image();
-
+        
         i.src = img_path
         i.onload = () => {
             this.image = i
@@ -161,6 +161,15 @@ class Entity
     {
         this.x = x
         this.y = y
+    }
+
+
+    public getPosition(): EntityPos
+    {
+        return {
+            x: this.x,
+            y: this.y
+        }
     }
 
     

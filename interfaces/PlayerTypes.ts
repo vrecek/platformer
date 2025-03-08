@@ -3,11 +3,6 @@ import { EntityStats } from "./EntityTypes"
 
 export type MoveKeys = 'w' | 'a' | 's' | 'd'
 
-export type PlayerPos = {
-    x: number
-    y: number
-}
-
 export type Bind = {
     keys: string[]
     fn:   () => void
@@ -23,3 +18,11 @@ export type PlayerStats = EntityStats& {
 }
 
 export type PlayerEq = (Item | null)[]
+
+export type ActivationObject = {
+    init_jump:   number
+    init_speed:  number
+    init_attcd:  number
+    init_attdmg: number
+    init_bltspd: number
+}

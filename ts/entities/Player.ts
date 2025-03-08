@@ -1,7 +1,7 @@
 import Entity from "./Entity.js"
-import { CollisionCb, Effects, EntityStats, Maybe } from "../../interfaces/EntityTypes.js"
+import { ActionDefaults, Effects, EntityStats, Maybe } from "../../interfaces/EntityTypes.js"
 import { CanvasStats, KeysInput } from "../../interfaces/GameTypes.js"
-import { Bindings, PlayerEq, PlayerPos, PlayerStats } from "../../interfaces/PlayerTypes.js"
+import { Bindings, PlayerEq, PlayerStats } from "../../interfaces/PlayerTypes.js"
 import Item from "./Item.js"
 import Action from "./Action.js"
 
@@ -30,13 +30,13 @@ class Player extends Action
     private initVelocity:    number
     private finishVelocity:  number
 
-    private curr_items:  PlayerEq
-    private start_items: PlayerEq
+    private curr_items:      PlayerEq
+    private start_items:     PlayerEq
 
 
-    public constructor(x: number, y: number, w: number, h: number, speed: number, jumpPower: number)
+    public constructor(x: number, y: number, w: number, h: number, speed: number, jumpPower: number, act_defaults: ActionDefaults)
     {
-        super(x, y, w, h, {image: "/data/player/player.svg"})
+        super(x, y, w, h, {image: "/data/player/player.svg", act_defaults})
 
         this.INIT_FINISH_VEL = jumpPower / 10
         this.COLL_PADDING    = .5
@@ -60,8 +60,8 @@ class Player extends Action
 
         this.bindings = {
             jump:  { keys: ['w', ' ', 'ArrowUp'], fn: ()=>{ (!this.isJumping && !this.isFalling) && this.jump() } },
-            left:  { keys: ['a', 'ArrowLeft'],    fn: ()=>{ this.x -= this.speedx } },
-            right: { keys: ['d', 'ArrowRight'],   fn: ()=>{ this.x += this.speedx } },
+            left:  { keys: ['a', 'ArrowLeft'],    fn: ()=>{ this.x -= this.speedx; this.last_dir = 'left' } },
+            right: { keys: ['d', 'ArrowRight'],   fn: ()=>{ this.x += this.speedx; this.last_dir = 'right' } },
         }
         this.flat_bindings = Object.values(this.bindings).map(x => x.keys).flat()
 
@@ -366,15 +366,6 @@ class Player extends Action
     }
 
 
-    public getPlayerPosition(): PlayerPos
-    {
-        return {
-            x: this.x,
-            y: this.y
-        }
-    }
-
-
     public addBinding(action: string, keys: string[], fn: ()=>void): void
     {
         this.bindings[action] = { keys, fn }
@@ -396,8 +387,7 @@ class Player extends Action
 
     public setItem(index: number, item: Item): void
     {
-        this.curr_items[index]  = item
-        this.start_items[index] = item
+        this.curr_items[index] = item
     }
 
 
@@ -407,13 +397,13 @@ class Player extends Action
     }
 
 
-    public reloadItems(): void
+    public loadEquipment(): void
     {
         this.curr_items = [...this.start_items]
     }
 
 
-    public resetItems(): void
+    public saveEquipment(): void
     {
         this.start_items = [...this.curr_items]
     }

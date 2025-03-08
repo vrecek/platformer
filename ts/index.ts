@@ -4,11 +4,12 @@ import Item from "../ts/entities/Item.js"
 import Platform from "../ts/entities/Platform.js"
 import Player from "../ts/entities/Player.js"
 import Score from "../ts/entities/Score.js"
-import { CollisionCb, Maybe, Platforms } from "../interfaces/EntityTypes.js"
+import { Bullet, CollisionCb, Maybe, Platforms } from "../interfaces/EntityTypes.js"
 import { EntityType, Level } from "../interfaces/GameTypes.js"
 import LEVELS from "../levels/Levels.js"
 import Action from "./entities/Action.js"
 import Enemy from "./entities/Enemy.js"
+import { ActivationObject } from "../interfaces/PlayerTypes.js"
 
 
 // ---------------------- CONSTS --------------------------
@@ -16,16 +17,24 @@ import Enemy from "./entities/Enemy.js"
 const GAME: Game = new Game(LEVELS),
       CTX:  CanvasRenderingContext2D = GAME.getCtx()
 
-const DEFAULT_SPEED: number = 3,
-      DEFAULT_JUMP:  number = 5,
-      EQ_COOLDOWN:   number = 200
+const DEFAULT_SPEED:  number = 3,
+      DEFAULT_JUMP:   number = 5,
+      DEFAULT_ATTCD:  number = 500,
+      DEFAULT_BLTSPD: number = 6,
+      DEFAULT_ATTDMG: number = 1,
+      EQ_COOLDOWN:    number = 200
 
 // --------------------------------------------------------
 
 
 // -------------------- ENTITIES --------------------------
 
-const PLAYER: Player = new Player(210, 30, 40, 40, DEFAULT_SPEED, DEFAULT_JUMP)
+const PLAYER: Player = new Player(210, 30, 40, 40, DEFAULT_SPEED, DEFAULT_JUMP, {
+    bullet_dmg:   DEFAULT_ATTDMG,
+    bullet_speed: DEFAULT_BLTSPD,
+    shoot_cd:     DEFAULT_ATTCD,
+    health:       10
+})
 
 // ------------------------------------------------------
 
@@ -64,15 +73,15 @@ GAME.update(() => {
         {
             ent.draw(CTX)
 
-            for (const b of ent.getShots() as Entity[])
+            for (const b of ent.getShots() as Bullet[])
             {
                 ent.drawShot(CTX, b)
 
-                b.checkCollision(surfaces, () => ent.removeBullet(b))
-                b.checkCollision<Enemy>(enemies, (e: Enemy) => {
-                    ent.removeBullet(b)
+                b.obj.checkCollision(surfaces, () => ent.removeBullet(b.obj))
+                b.obj.checkCollision<Enemy>(enemies, (e: Enemy) => {
+                    ent.removeBullet(b.obj)
 
-                    if (e.deal_damage())
+                    if (PLAYER.deal_damage(e))
                         removeEntity('enemies', e.getStats().id)
                 })
             }
@@ -93,6 +102,17 @@ GAME.update(() => {
     }
 })
 
+/* 
+LEFT:
+health (space-between: top-middle-bottom)
+
+RIGHT:
+top-middle-bottom
+bottom gitbub
+top label
+middle buttons
+
+*/
 
 GAME.updateLevelStats(1, g_currentLevel?.scores.length ?? 0)
 GAME.insufficientScreenHandler()
@@ -110,7 +130,15 @@ PLAYER.addBinding('item_use', ['f'], () => {
 
     if (eq && i !== -1 && PLAYER.items[i])
     {
-        if ( !PLAYER.items[i]?.activate(PLAYER, DEFAULT_JUMP, DEFAULT_SPEED) )
+        const obj: ActivationObject = {
+            init_jump:   DEFAULT_JUMP,
+            init_speed:  DEFAULT_SPEED,
+            init_attcd:  DEFAULT_ATTCD,
+            init_attdmg: DEFAULT_ATTDMG,
+            init_bltspd: DEFAULT_BLTSPD
+        }
+
+        if ( !PLAYER.items[i]?.activate(PLAYER, obj) )
             return
 
         PLAYER.clearItem(i)
@@ -336,7 +364,7 @@ const showLoseScreen = (): void => {
     b1.onclick = () => {
         PLAYER.changePlayerMovementStatus(true)
         PLAYER.setImage("/data/player/player.svg")
-        PLAYER.reloadItems()
+        PLAYER.loadEquipment()
 
         s.remove()
         displayItems()
@@ -356,7 +384,7 @@ const proceedToNextLevel = (nextLevel: Level): void => {
 
     PLAYER.setPlayerJumpPower(DEFAULT_JUMP)
     PLAYER.setPlayerSpeed(DEFAULT_SPEED)
-    PLAYER.resetItems()
+    PLAYER.saveEquipment()
     PLAYER.resetJumpState()
     
     g_initPlayerPos = false
