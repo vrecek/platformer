@@ -88,18 +88,12 @@ PLAYER.initPressKeyEvents()
 
 PLAYER.addBinding('item_scroll-backwards', ['q'], () => activeItemSelector(true))
 PLAYER.addBinding('item_scroll-forwards',  ['e'], () => activeItemSelector())
+PLAYER.addBinding('item_drop',  ['z'], () => itemDrop())
 
 PLAYER.addBinding('item_use', ['f'], () => {
-    if (!g_item_toggle) 
-        return
+    const [eq, i] = getActiveIndex()
 
-    g_item_toggle = false
-    setTimeout(() => g_item_toggle = true, EQ_COOLDOWN);
-
-    const eq: Element[] = [...document.querySelector('aside.eq section.items')!.children]
-    let   i:  number    = eq.findIndex(x => x.classList.contains('active'))
-
-    if (PLAYER.items[i])
+    if (eq && i !== -1 && PLAYER.items[i])
     {
         if ( !PLAYER.items[i]?.activate(PLAYER, DEFAULT_JUMP, DEFAULT_SPEED) )
             return
@@ -124,6 +118,20 @@ document.querySelector('section.lvl button')?.addEventListener('click', (e: Even
     if (l)
         proceedToNextLevel(l)
 })
+
+
+const getActiveIndex = (): [Element[] | null, number] => {
+    if (!g_item_toggle) 
+        return [null, -1]
+
+    g_item_toggle = false
+    setTimeout(() => g_item_toggle = true, EQ_COOLDOWN);
+
+    const eq: Element[] = [...document.querySelector('aside.eq section.items')!.children]
+    let   i:  number    = eq.findIndex(x => x.classList.contains('active'))
+
+    return [eq, i]
+}
 
 
 const displayItems = (): void => {
@@ -152,18 +160,29 @@ const activeItemToggler = (i: number, eq: Element[], backwards?: boolean): void 
 }
 
 
-const activeItemSelector = (backwards?: boolean): void => {
-    if (!g_item_toggle) 
-        return
+const itemDrop = (): void => {
+    const [eq, i] = getActiveIndex()
 
-    g_item_toggle = false
+    if (!eq || i === -1) return
 
-    const eq: Element[] = [...document.querySelector('aside.eq section.items')!.children]
-    let   i:  number    = eq.findIndex(x => x.classList.contains('active'))
+    if (PLAYER.items[i])
+    {
+        PLAYER.clearItem(i)
+        activeItemToggler(i, eq)
+        displayItems()
+    }
+    
+}
+
+
+const activeItemSelector = (backwards?: boolean): boolean => {
+    const [eq, i] = getActiveIndex()
+
+    if (!eq || i === -1) return false
 
     activeItemToggler(i, eq, backwards)
 
-    setTimeout(() => g_item_toggle = true, EQ_COOLDOWN);
+    return true
 }
 
 
@@ -233,7 +252,10 @@ const collidedWithScore = (score: Score): void => {
         const nextLevel: Level | null = GAME.loadLevel('next')
 
         if (nextLevel)
+        {
+            removeAllEffects()
             proceedToNextLevel(nextLevel)
+        }
         else 
         {
             PLAYER.changePlayerMovementStatus(false)
@@ -269,8 +291,7 @@ const collidedWithEnemy = (enemy: Entity): void => {
         return
     }
 
-    for (const x of PLAYER.getActiveEffects())
-        Item.zeroEffectContainer(PLAYER, x)
+    removeAllEffects()
 
     PLAYER.changePlayerMovementStatus(false)
     PLAYER.setImage("/data/player_dead.svg")
@@ -354,4 +375,10 @@ const showFinishScreen = (): void => {
 const toggleEnemyAnimation = (val: boolean): void => {
     for (const ent of g_currentLevel?.enemies ?? [])
         ent.toggleAnimation(val)
+}
+
+
+const removeAllEffects = (): void => {
+    for (const x of PLAYER.getActiveEffects())
+        Item.zeroEffectContainer(PLAYER, x)
 }

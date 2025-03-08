@@ -441,7 +441,7 @@ class Player extends Entity
         this.start_items[index] = item
     }
 
-    
+
     public clearItem(index: number): void
     {
         this.curr_items[index] = null
