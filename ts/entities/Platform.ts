@@ -1,5 +1,5 @@
 import Entity from "./Entity.js";
-import { Maybe, Platforms } from "./interfaces/EntityTypes.js";
+import { Platforms } from "../../interfaces/EntityTypes.js";
 
 
 class Platform extends Entity

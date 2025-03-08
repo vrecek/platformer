@@ -1,14 +1,17 @@
-import Entity from '../Entity.js'
+import Entity from '../ts/entities/Entity.js'
 import { Level } from '../interfaces/GameTypes'
-import Item from '../Item.js'
-import Platform from '../Platform.js'
-import Score from '../Score.js'
+import Item from '../ts/entities/Item.js'
+import Platform from '../ts/entities/Platform.js'
+import Score from '../ts/entities/Score.js'
+import Enemy from '../ts/entities/Enemy.js'
 
 
 const LEVELS: Level[] = [
     {
         player: { x: 0, y: 560 },
-        enemies: [],
+        enemies: [
+            new Enemy(650, 560, 40, 40),
+        ],
         surfaces: [
             // new Entity(150, 550, 40, 40),
             // new Entity(350, 550, 40, 40),
@@ -108,24 +111,18 @@ const LEVELS: Level[] = [
     {
         player: { x: 20, y: 40 },
         enemies: [
-            new Entity(0, 560, 800, 40),
-            new Entity(285, 25, 20, 40, {
-                animPath: {
-                    speed: 4,
-                    paths: [{ x: 285, y: 210 }]
-                }
+            new Enemy(0, 560, 800, 40),
+            new Enemy(285, 25, 20, 40, {
+                speed: 4,
+                paths: [{ x: 285, y: 210 }]
             }),
-            new Entity(500, 210, 20, 40, {
-                animPath: {
-                    speed: 4,
-                    paths: [{ x: 500, y: 25 }]
-                }
+            new Enemy(500, 210, 20, 40, {
+                speed: 4,
+                paths: [{ x: 500, y: 25 }]
             }),
-            new Entity(240, 270, 40, 20, {
-                animPath: {
-                    speed: 4, interval_wait: 500,
-                    paths: [{ x: 470, y: 260 }]
-                }
+            new Enemy(240, 270, 40, 20, {
+                speed: 4, interval_wait: 500,
+                paths: [{ x: 470, y: 260 }]
             }),
         ],
         surfaces: [
@@ -144,7 +141,7 @@ const LEVELS: Level[] = [
             new Entity(175, 300, 400, 20),
         ],
         scores: [
-            // new Score(650, 200),
+            new Score(650, 200),
             new Score(60, 200),
             // new Score(510, 120),
             // new Score(360, 270),

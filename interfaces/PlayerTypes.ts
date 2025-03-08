@@ -1,4 +1,4 @@
-import Item from "../Item"
+import Item from "../ts/entities/Item"
 import { EntityStats } from "./EntityTypes"
 
 export type MoveKeys = 'w' | 'a' | 's' | 'd'

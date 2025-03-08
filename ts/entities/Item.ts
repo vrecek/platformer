@@ -1,6 +1,6 @@
 import Entity from "./Entity.js";
-import { Effects, Items, Maybe } from "./interfaces/EntityTypes.js";
-import { Fn, VoidFn } from "./interfaces/GameTypes.js";
+import { Effects, Items, Maybe } from "../../interfaces/EntityTypes.js";
+import { Fn, VoidFn } from "../../interfaces/GameTypes.js";
 import Player from "./Player.js";
 
 

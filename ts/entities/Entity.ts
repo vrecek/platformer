@@ -1,4 +1,4 @@
-import { AnimationObject, AnimationPath, EntityStats, Maybe, OptionalArgs } from "./interfaces/EntityTypes"
+import { AnimationObject, AnimationPath, CollisionCb, EntityStats, Maybe, OptionalArgs } from "../../interfaces/EntityTypes"
 
 
 class Entity 
@@ -7,23 +7,24 @@ class Entity
     private animation:      Maybe<AnimationObject>
     private animation_wait: boolean
 
-    protected id:        string
-    protected name:      Maybe
-    protected color:     Maybe
-    protected image_src: Maybe
-    protected x:         number
-    protected y:         number
-    protected w:         number
-    protected h:         number
+    protected id:         string
+    protected name:       Maybe
+    protected color:      Maybe
+    protected image_src:  Maybe
+    protected x:          number
+    protected y:          number
+    protected w:          number
+    protected h:          number
+    protected collisions: string[]
     
-
-
 
     public constructor(x: number, y: number, w: number, h: number, args?: Maybe<OptionalArgs>)
     {
         this.id    = Math.random().toString().slice(2)
         this.name  = args?.name
         this.color = args?.color
+
+        this.collisions = []
 
         this.x = x
         this.y = y
@@ -153,6 +154,41 @@ class Entity
             this.image = i
             this.image_src = img_path
         }
+    }
+
+
+    public setPosition(x: number, y: number): void
+    {
+        this.x = x
+        this.y = y
+    }
+
+    
+    public checkCollision<T extends Entity>(entities: T[], collidedFn?: CollisionCb<T>, uncollidedFn?: Maybe<CollisionCb<T>>): T | null {
+        let collidedEntity: T | null = null
+
+        for (const ent of entities) 
+        {
+            const { x, y, w, h, id } = ent.getStats()
+
+            if ( ((this.x + this.w >= x) && (this.y + this.h >= y)) && ((this.x <= x + w) && (this.y <= y + h)) )
+            {
+                collidedEntity = ent
+
+                if (this.collisions.every(x => x !== id))
+                    this.collisions.push(id)
+
+                collidedFn && collidedFn(ent)
+            }
+            else if (this.collisions.includes(id)) 
+            {
+                this.collisions.splice(this.collisions.findIndex(e => e === id), 1)
+
+                uncollidedFn && uncollidedFn(ent)
+            }
+        }
+
+        return collidedEntity
     }
 }
 

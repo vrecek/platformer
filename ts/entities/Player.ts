@@ -1,12 +1,13 @@
-import Entity from "./Entity.js";
-import { CollisionCb, Effects, EntityStats, Maybe } from "./interfaces/EntityTypes.js";
-import { CanvasStats, KeysInput } from "./interfaces/GameTypes.js";
-import { Bindings, PlayerEq, PlayerPos, PlayerStats } from "./interfaces/PlayerTypes.js";
-import Item from "./Item.js";
+import Entity from "./Entity.js"
+import { CollisionCb, Effects, EntityStats, Maybe } from "../../interfaces/EntityTypes.js"
+import { CanvasStats, KeysInput } from "../../interfaces/GameTypes.js"
+import { Bindings, PlayerEq, PlayerPos, PlayerStats } from "../../interfaces/PlayerTypes.js"
+import Item from "./Item.js"
+import Action from "./Action.js"
 
 
 
-class Player extends Entity 
+class Player extends Action
 { 
     private keys:            KeysInput
     private blockedKeys:     Set<string>
@@ -15,8 +16,6 @@ class Player extends Entity
     private movementStatus:  boolean
     private activeEffects:   string[]  
     private activeItems:     Item[] 
-
-    private collisions:      string[]
 
     private speedx:          number
     private jumpPower:       number
@@ -31,18 +30,13 @@ class Player extends Entity
     private initVelocity:    number
     private finishVelocity:  number
 
-    // public items:       (Item | null)[]
     private curr_items:  PlayerEq
     private start_items: PlayerEq
 
 
-    public get items(): PlayerEq {
-        return this.curr_items
-    }
-
     public constructor(x: number, y: number, w: number, h: number, speed: number, jumpPower: number)
     {
-        super(x, y, w, h, {image: "/data/player.svg"})
+        super(x, y, w, h, {image: "/data/player/player.svg"})
 
         this.INIT_FINISH_VEL = jumpPower / 10
         this.COLL_PADDING    = .5
@@ -150,40 +144,12 @@ class Player extends Entity
     }
 
 
-    public delete_entity<T extends Entity>(arr: T[], del_id: string): T[]
+    public delete_entity(arr: Entity[], del_id: string): any[]
     {
         if (this.collisions.includes(del_id))
             this.collisions.splice(this.collisions.findIndex(e => e === del_id), 1)
 
         return arr.filter(x => x.getStats().id !== del_id)
-    }
-
-
-    public checkCollision(entities: Entity[], collidedFn?: CollisionCb, uncollidedFn?: Maybe<CollisionCb>): Entity | null {
-        let collidedEntity: Entity | null = null
-
-        for (const ent of entities) 
-        {
-            const { x, y, w, h, id } = ent.getStats()
-
-            if ( ((this.x + this.w >= x) && (this.y + this.h >= y)) && ((this.x <= x + w) && (this.y <= y + h)) )
-            {
-                collidedEntity = ent
-
-                if (this.collisions.every(x => x !== id))
-                    this.collisions.push(id)
-
-                collidedFn && collidedFn(ent)
-            }
-            else if (this.collisions.includes(id)) 
-            {
-                this.collisions.splice(this.collisions.findIndex(e => e === id), 1)
-
-                uncollidedFn && uncollidedFn(ent)
-            }
-        }
-
-        return collidedEntity
     }
 
 
@@ -409,13 +375,6 @@ class Player extends Entity
     }
 
 
-    public setPlayerPos(newX: number, newY: number): void 
-    {
-        this.x = newX
-        this.y = newY
-    }
-
-
     public addBinding(action: string, keys: string[], fn: ()=>void): void
     {
         this.bindings[action] = { keys, fn }
@@ -503,7 +462,14 @@ class Player extends Entity
             speed: this.speedx
         }
     }
+
+
+    public get items(): PlayerEq
+    {
+        return this.curr_items
+    }
 }
+
 
 
 export default Player

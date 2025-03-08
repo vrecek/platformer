@@ -1,13 +1,14 @@
-import Entity from "./Entity.js"
-import Game from "./Game.js"
-import Item from "./Item.js"
-import Platform from "./Platform.js"
-import Player from "./Player.js"
-import Score from "./Score.js"
-import { CollisionCb, Maybe, Platforms } from "./interfaces/EntityTypes.js"
-import { Level } from "./interfaces/GameTypes.js"
-import LEVELS from "./levels/Levels.js"
-
+import Entity from "../ts/entities/Entity.js"
+import Game from "../ts/Game.js"
+import Item from "../ts/entities/Item.js"
+import Platform from "../ts/entities/Platform.js"
+import Player from "../ts/entities/Player.js"
+import Score from "../ts/entities/Score.js"
+import { CollisionCb, Maybe, Platforms } from "../interfaces/EntityTypes.js"
+import { EntityType, Level } from "../interfaces/GameTypes.js"
+import LEVELS from "../levels/Levels.js"
+import Action from "./entities/Action.js"
+import Enemy from "./entities/Enemy.js"
 
 
 // ---------------------- CONSTS --------------------------
@@ -48,21 +49,34 @@ GAME.update(() => {
 
         if (!g_initPlayerPos)
         {
-            PLAYER.setPlayerPos(g_currentLevel.player.x, g_currentLevel.player.y)
+            PLAYER.setPosition(g_currentLevel.player.x, g_currentLevel.player.y)
             g_initPlayerPos = true
         }
 
-        for (const ent of enemies)
-            ent.draw(CTX, '#e73737')
 
         for (const ent of surfaces)
             ent.draw(CTX, '#3a8cf3')
 
-        for (const ent of [...scores, ...platforms, ...items])
+        for (const ent of [...scores, ...platforms, ...items] as Entity[])
             ent.draw(CTX)
 
+        for (const ent of [...enemies, PLAYER] as Action[])
+        {
+            ent.draw(CTX)
 
-        PLAYER.draw(CTX)
+            for (const b of ent.getShots() as Entity[])
+            {
+                ent.drawShot(CTX, b)
+
+                b.checkCollision(surfaces, () => ent.removeBullet(b))
+                b.checkCollision<Enemy>(enemies, (e: Enemy) => {
+                    ent.removeBullet(b)
+
+                    if (e.deal_damage())
+                        removeEntity('enemies', e.getStats().id)
+                })
+            }
+        }
 
         PLAYER.handleGravity(PLAYER.checkCollision(surfaces), GAME.getCanvasStats())
         PLAYER.resetBlockedKeys()
@@ -88,7 +102,8 @@ PLAYER.initPressKeyEvents()
 
 PLAYER.addBinding('item_scroll-backwards', ['q'], () => activeItemSelector(true))
 PLAYER.addBinding('item_scroll-forwards',  ['e'], () => activeItemSelector())
-PLAYER.addBinding('item_drop',  ['z'], () => itemDrop())
+PLAYER.addBinding('item_drop',             ['z'], () => itemDrop())
+PLAYER.addBinding('player_shoot',          ['x'], () => PLAYER.shoot())
 
 PLAYER.addBinding('item_use', ['f'], () => {
     const [eq, i] = getActiveIndex()
@@ -171,7 +186,6 @@ const itemDrop = (): void => {
         activeItemToggler(i, eq)
         displayItems()
     }
-    
 }
 
 
@@ -193,7 +207,7 @@ const collidedWithItem = (item: Item): void => {
     const i: number = PLAYER.items.findIndex(x => !x)
     PLAYER.setItem(i, item)
 
-    g_currentLevel!.items = PLAYER.delete_entity(g_currentLevel!.items, item.getStats().id)
+    removeEntity('items', item.getStats().id)
     
     displayItems()
 }
@@ -243,9 +257,14 @@ const unCollidedWithPlatform = (platform: Platform): void => {
 }
 
 
+const removeEntity = (type: EntityType, id: string): void => {
+    g_currentLevel![type] = PLAYER.delete_entity(g_currentLevel![type], id)
+}
+
+
 const collidedWithScore = (score: Score): void => {
     GAME.updateScoreText(1)
-    g_currentLevel!.scores = PLAYER.delete_entity(g_currentLevel!.scores, score.getStats().id)
+    removeEntity('scores', score.getStats().id)
 
     if (GAME.hasLevelBeenFinished()) 
     {
@@ -273,7 +292,7 @@ const collidedWithSurface = (ent: Entity): void => {
 
 const unCollidedWithEnemy = (): void => {
     g_collidedE = null
-    PLAYER.setImage("/data/player.svg")
+    PLAYER.setImage("/data/player/player.svg")
 }
 
 
@@ -285,7 +304,7 @@ const collidedWithEnemy = (enemy: Entity): void => {
         if (!g_collidedE)
         {
             g_collidedE = enemy.getStats().id
-            PLAYER.setImage("/data/player_immortal.svg")
+            PLAYER.setImage("/data/player/player_immortal.svg")
         }
 
         return
@@ -294,7 +313,7 @@ const collidedWithEnemy = (enemy: Entity): void => {
     removeAllEffects()
 
     PLAYER.changePlayerMovementStatus(false)
-    PLAYER.setImage("/data/player_dead.svg")
+    PLAYER.setImage("/data/player/player_dead.svg")
     toggleEnemyAnimation(false)
 
     showLoseScreen()
@@ -316,13 +335,13 @@ const showLoseScreen = (): void => {
 
     b1.onclick = () => {
         PLAYER.changePlayerMovementStatus(true)
-        PLAYER.setImage("/data/player.svg")
+        PLAYER.setImage("/data/player/player.svg")
         PLAYER.reloadItems()
 
         s.remove()
         displayItems()
         toggleEnemyAnimation(true)
-        proceedToNextLevel( GAME.loadLevel('current')! )
+        proceedToNextLevel(GAME.loadLevel('current')!)
     }
 
     d.append(b1, b2)

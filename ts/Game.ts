@@ -1,5 +1,4 @@
-import Entity from "./Entity"
-import { CanvasStats, Level, LevelLoader, VoidFn } from "./interfaces/GameTypes"
+import { CanvasStats, Level, LevelLoader, VoidFn } from "../interfaces/GameTypes"
 
 
 class Game
@@ -19,7 +18,7 @@ class Game
         this.canvas = document.querySelector('canvas')!
         this.ctx    = this.canvas.getContext('2d')!
 
-        this.levels = levels
+        this.levels = [...levels]
 
         this.level       = 1
         this.points      = 0
@@ -142,7 +141,7 @@ class Game
             this.totalPoints = newLevel.scores.length
         }
 
-        return newLevel ? {...newLevel} : null
+        return newLevel ? Object.assign(Object.create(Object.getPrototypeOf(newLevel)), newLevel) : null
     }
 
 

@@ -1,4 +1,4 @@
-import Entity from "../Entity"
+import Entity from "../ts/entities/Entity"
 
 
 export type OptionalArgs = {
@@ -19,7 +19,7 @@ export type EntityStats = {
     y:    number
 }
 
-export type CollisionCb = (ent: Entity) => void
+export type CollisionCb<T extends Entity = Entity> = (ent: T) => void
 
 export type AnimationObject = AnimationArg & {
     shouldMove: boolean
@@ -43,3 +43,10 @@ export type Effects = Items | Platforms
 
 export type Platforms = 'speed' | 'jump'
 export type Items = 'jump' | 'speed' | 'jumpboost' | 'invincibility'
+
+export type Pos = {
+    x: number
+    y: number
+    w: number
+    h: number
+}
