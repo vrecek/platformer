@@ -11,7 +11,31 @@ aside {
     }
 
     &.eq {
-        section.effects {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+
+        section.health {
+            p {
+                font-weight: bold;
+                font-size: 1.75rem;
+            }
+
+            div.bar {
+                border-radius: .25em;
+                background: #3A3A5B;
+                border: 2px solid #454F6B;
+                height: 25px;
+
+                div {
+                    height: 100%;
+                    background: rgb(48, 148, 48);
+                    width: 100%;
+                }
+            }
+        }
+
+        article.effects section {
             div.container {
                 display: flex;
                 align-items: center;
@@ -52,11 +76,10 @@ aside {
             }
         }
 
-        section.items {
+        article.items section {
             display: flex;
             flex-wrap: wrap;
             justify-content: space-between;
-            margin-bottom: 2em;
 
             div {
                 width: 29%;

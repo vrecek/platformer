@@ -9,6 +9,12 @@ export type OptionalArgs = {
     act_defaults?: Maybe<ActionDefaults> 
 }
 
+export type ShootDirection = 'left' | 'right'
+
+export type OptionalEnemyArgs = OptionalArgs & {
+    shoot?: boolean
+}
+
 export type EntityPos = {
     x: number
     y: number
@@ -19,6 +25,7 @@ export type ActionDefaults = {
     bullet_dmg?:   number
     bullet_speed?: number
     health?:       number
+    direction?:    ShootDirection
 }
 
 export type EntityStats = {
@@ -36,19 +43,21 @@ export type CollisionCb<T extends Entity = Entity> = (ent: T) => void
 
 export type AnimationObject = AnimationArg & {
     shouldMove: boolean
-    moveLevel: number
+    moveLevel:  number
 }
 
-export type AnimationPath = {
+export type PathObj = {
     x: number
     y: number
 }
 
 export type AnimationArg = {
     speed:          number
-    paths:          AnimationPath[]
+    paths:          Path[]
     interval_wait?: number
 } | null
+
+export type Path = [number, number]
 
 export type Maybe<T = string> = T | null | undefined
 
@@ -70,3 +79,8 @@ export type Bullet = {
 }
 
 export type BulletDirection = 1 | -1
+
+export type HealthObject = {
+    default: number
+    current: number
+}

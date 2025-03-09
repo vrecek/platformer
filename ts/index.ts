@@ -43,6 +43,8 @@ const PLAYER: Player = new Player(210, 30, 40, 40, DEFAULT_SPEED, DEFAULT_JUMP, 
 
 let g_initPlayerPos: boolean      = false,
     g_item_toggle:   boolean      = true,
+    g_stopped:       boolean      = false,
+    g_healthbefore:  number       = 0,
     g_currentLevel:  Maybe<Level> = GAME.loadLevel('current'),
     g_collidedE:     Maybe        = null
 
@@ -56,12 +58,12 @@ GAME.update(() => {
     {
         const { enemies, scores, surfaces, platforms, items } = g_currentLevel
 
+
         if (!g_initPlayerPos)
         {
             PLAYER.setPosition(g_currentLevel.player.x, g_currentLevel.player.y)
             g_initPlayerPos = true
         }
-
 
         for (const ent of surfaces)
             ent.draw(CTX, '#3a8cf3')
@@ -73,19 +75,38 @@ GAME.update(() => {
         {
             ent.draw(CTX)
 
-            for (const b of ent.getShots() as Bullet[])
+            if (ent instanceof Enemy)
+                ent.shoot()
+
+            for (const bullet of ent.getShots() as Bullet[])
             {
-                ent.drawShot(CTX, b)
+                ent.drawShot(CTX, bullet)
 
-                b.obj.checkCollision(surfaces, () => ent.removeBullet(b.obj))
-                b.obj.checkCollision<Enemy>(enemies, (e: Enemy) => {
-                    ent.removeBullet(b.obj)
+                bullet.obj.checkCollision(surfaces, () => ent.removeBullet(bullet.obj))
 
-                    if (PLAYER.deal_damage(e))
-                        removeEntity('enemies', e.getStats().id)
-                })
+                if (ent instanceof Enemy)
+                {
+                    bullet.obj.checkCollision<Player>([PLAYER], (e: Player) => {
+                        ent.removeBullet(bullet.obj)
+
+                        if (ent.deal_damage(e))
+                            removeEntity('enemies', e.getStats().id)
+                    })
+                }
+
+                else if (ent instanceof Player)
+                {
+                    bullet.obj.checkCollision<Enemy>(enemies, (e: Enemy) => {
+                        ent.removeBullet(bullet.obj)
+
+                        if (ent.deal_damage(e))
+                            removeEntity('enemies', e.getStats().id)
+                    })
+                }
             }
         }
+
+        if (g_stopped) return
 
         PLAYER.handleGravity(PLAYER.checkCollision(surfaces), GAME.getCanvasStats())
         PLAYER.resetBlockedKeys()
@@ -98,20 +119,21 @@ GAME.update(() => {
 
         PLAYER.handleCanvasCollision(GAME.getCanvasStats())
 
+        updateHealth()
+
+        if (PLAYER.get_health().current <= 0)
+            player_dead_handler()
+
         PLAYER.handleAdvancedMoveKeys()
     }
 })
 
 /* 
-LEFT:
-health (space-between: top-middle-bottom)
-
 RIGHT:
 top-middle-bottom
 bottom gitbub
 top label
 middle buttons
-
 */
 
 GAME.updateLevelStats(1, g_currentLevel?.scores.length ?? 0)
@@ -170,7 +192,7 @@ const getActiveIndex = (): [Element[] | null, number] => {
     g_item_toggle = false
     setTimeout(() => g_item_toggle = true, EQ_COOLDOWN);
 
-    const eq: Element[] = [...document.querySelector('aside.eq section.items')!.children]
+    const eq: Element[] = [...document.querySelector('aside.eq article.items section')!.children]
     let   i:  number    = eq.findIndex(x => x.classList.contains('active'))
 
     return [eq, i]
@@ -178,7 +200,7 @@ const getActiveIndex = (): [Element[] | null, number] => {
 
 
 const displayItems = (): void => {
-    const eq: Element[] = [...document.querySelector('aside.eq section.items')!.children]
+    const eq: Element[] = [...document.querySelector('aside.eq article.items section')!.children]
 
     for (let i = 0; i < PLAYER.items.length; i++)
     {
@@ -325,8 +347,6 @@ const unCollidedWithEnemy = (): void => {
 
 
 const collidedWithEnemy = (enemy: Entity): void => {
-    if (document.querySelector('h3')) return
-
     if (PLAYER.isEffectActive('invincibility'))
     {
         if (!g_collidedE)
@@ -337,6 +357,13 @@ const collidedWithEnemy = (enemy: Entity): void => {
 
         return
     }
+
+    PLAYER.set_health(0)
+}
+
+
+const player_dead_handler = (): void => {
+    g_stopped = true
 
     removeAllEffects()
 
@@ -365,11 +392,14 @@ const showLoseScreen = (): void => {
         PLAYER.changePlayerMovementStatus(true)
         PLAYER.setImage("/data/player/player.svg")
         PLAYER.loadEquipment()
+        PLAYER.set_health(PLAYER.getStats().def_health)
 
         s.remove()
         displayItems()
         toggleEnemyAnimation(true)
         proceedToNextLevel(GAME.loadLevel('current')!)
+        
+        g_stopped = false
     }
 
     d.append(b1, b2)
@@ -379,10 +409,26 @@ const showLoseScreen = (): void => {
 }
 
 
+const updateHealth = (): void => {
+    const {health, def_health} = PLAYER.getStats()
+
+    if (health === g_healthbefore)
+        return
+
+    g_healthbefore = health
+
+    const perc: number      = (100 * health) / def_health,
+          h:    HTMLElement = document.querySelector('section.health div.bar div') as HTMLElement,
+          p:    Element     = document.querySelector('section.health p')!
+
+    h.style.width = `${perc}%`
+    p.textContent = `${perc}`
+}
+
+
 const proceedToNextLevel = (nextLevel: Level): void => {
     document.querySelector('h3')?.remove()
 
-    PLAYER.setPlayerJumpPower(DEFAULT_JUMP)
     PLAYER.setPlayerSpeed(DEFAULT_SPEED)
     PLAYER.saveEquipment()
     PLAYER.resetJumpState()

@@ -12,9 +12,14 @@ export type Bindings = {
     [key:string]: Bind
 }
 
-export type PlayerStats = EntityStats& {
+export type PlayerStats = ActionStats & {
     speed:      number
     jump_power: number
+}
+
+export type ActionStats = EntityStats & {
+    health:     number
+    def_health: number
 }
 
 export type PlayerEq = (Item | null)[]

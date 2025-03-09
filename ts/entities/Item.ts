@@ -1,6 +1,6 @@
 import Entity from "./Entity.js";
 import { Effects, Items, Maybe } from "../../interfaces/EntityTypes.js";
-import { Fn, VoidFn } from "../../interfaces/GameTypes.js";
+import { Fn } from "../../interfaces/GameTypes.js";
 import Player from "./Player.js";
 import { ActivationObject } from "../../interfaces/PlayerTypes.js";
 
@@ -10,8 +10,15 @@ class Item extends Entity
     private interval?:   number
     private timeout?:    number
     private activate_fn: Maybe<(plr: Player, details: ActivationObject) => boolean>
+    private finish_fn:   Maybe<Fn>
 
     
+    private set_finish(fn: Maybe<Fn>): void
+    {
+        if (!this.finish_fn)
+            this.finish_fn = fn
+    }
+
     private calculateAnimationStep(timeout_ms: number, interval_ms: number): number
     {
         return (100 * interval_ms) / timeout_ms
@@ -22,7 +29,7 @@ class Item extends Entity
         this.getEffectContainer(effect).classList.toggle('active')
     }
 
-    private initEffect(plr: Player, effect: Effects, duration_l: number, interval_l: number, start_fn: Fn<boolean>, end_fn: Fn): boolean
+    private initEffect(plr: Player, effect: Effects, duration_l: number, interval_l: number, start_fn: Fn<boolean>, end_fn?: Maybe<Fn>): boolean
     {
         if (plr.isEffectActive(effect) || !start_fn())
             return false
@@ -37,7 +44,7 @@ class Item extends Entity
 
         this.timeout = setTimeout(() => {
             Item.zeroEffectContainer(plr, effect)
-            end_fn()
+            end_fn?.()
 
         }, duration_l);
 
@@ -90,12 +97,14 @@ class Item extends Entity
                 super(x, y, SIZE, SIZE, {image, name: type})
 
                 this.activate_fn = (plr: Player, {init_jump}): boolean => {
+                    this.set_finish(() => plr.setPlayerJumpPower(init_jump))
+
                     return this.initEffect(plr, type, DURATION_LENGTH, INTERVAL_LENGTH, () => {
                             
                         plr.setPlayerJumpPower(10)
                         return true
 
-                    }, () => plr.setPlayerJumpPower(init_jump))
+                    }, this.finish_fn)
                 }
 
                 break
@@ -108,6 +117,8 @@ class Item extends Entity
                 super(x, y, SIZE, SIZE, {image, name: type})
 
                 this.activate_fn = (plr: Player, {init_speed}): boolean => {
+                    this.set_finish(() => plr.setPlayerSpeed(init_speed))
+
                     return this.initEffect(plr, type, DURATION_LENGTH, INTERVAL_LENGTH, () => {
 
                         if (!plr.isTouchingGround())
@@ -117,7 +128,7 @@ class Item extends Entity
 
                         return true
 
-                    }, () => plr.setPlayerSpeed(init_speed))
+                    }, this.finish_fn)
                 }
 
                 break
@@ -131,9 +142,8 @@ class Item extends Entity
 
                 this.activate_fn = (plr: Player): boolean => {
                     return this.initEffect(plr, type, DURATION_LENGTH, INTERVAL_LENGTH, () => {
-                        return true
-                        
-                    }, () => {})
+                        return true    
+                    })
                 }
 
                 break
@@ -146,15 +156,14 @@ class Item extends Entity
                 super(x, y, SIZE, SIZE, {image, name: type})
 
                 this.activate_fn = (plr: Player, {init_attcd, init_bltspd}): boolean => {
+                    this.set_finish(() => { plr.setAttackCooldown(init_attcd); plr.setBulletSpeed(init_bltspd) })
+
                     return this.initEffect(plr, type, DURATION_LENGTH, INTERVAL_LENGTH, () => {
                         plr.setAttackCooldown(200)
                         plr.setBulletSpeed(9)
                         return true
                         
-                    }, () => {
-                        plr.setAttackCooldown(init_attcd)
-                        plr.setBulletSpeed(init_bltspd)
-                    })
+                    }, this.finish_fn)
                 }
 
                 break
@@ -167,16 +176,15 @@ class Item extends Entity
                 super(x, y, SIZE, SIZE, {image, name: type})
 
                 this.activate_fn = (plr: Player, {init_attdmg}): boolean => {
+                    this.set_finish(() => { plr.setAttackDamage(init_attdmg); plr.setImage('/data/player/player.svg') })
+
                     return this.initEffect(plr, type, DURATION_LENGTH, INTERVAL_LENGTH, () => {
                         plr.setAttackDamage(5)
                         plr.setImage('/data/player/player_mad.svg')
 
                         return true
                         
-                    }, () => {
-                        plr.setAttackDamage(init_attdmg)
-                        plr.setImage('/data/player/player.svg')
-                    })
+                    }, this.finish_fn)
                 }
 
                 break
@@ -184,7 +192,6 @@ class Item extends Entity
 
             default:
                 super(x, y, 40, 40, {image, name: type})
-                this.activate_fn = null
         }
     }
 
@@ -204,7 +211,7 @@ class Item extends Entity
 
     public getEffectContainer(effect: string, as_animation_bar?: boolean): HTMLElement
     {
-        return document.querySelector(`section.effects div.effect-${effect} ${as_animation_bar ? "div.bar div" : ""}`)!
+        return document.querySelector(`article.effects div.effect-${effect} ${as_animation_bar ? "div.bar div" : ""}`)!
     }
 
 
@@ -217,6 +224,7 @@ class Item extends Entity
             return
 
         item.cancel_timers()
+        item.finish_fn?.()
 
         cont.classList.remove('active');
         (cont.children[1].children[0] as HTMLElement).style.width = '0'

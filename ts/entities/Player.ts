@@ -206,7 +206,7 @@ class Player extends Action
         if (
             this.isFalling && plrYHeight >= e.y && 
             this.x < e.x + e.w-2 && this.x + this.w-2 > e.x ||
-            (e.anim && e.anim.paths[e.anim.moveLevel].y < e.anim.paths[0].y)
+            (e.anim && e.anim.paths[e.anim.moveLevel][1] < e.anim.paths[0][1])
         ) {
             this.resetJumpState()
 
@@ -228,13 +228,13 @@ class Player extends Action
 
         if (e.anim && !from_bottom)
         {
-            if (!this.isJumping && !this.isFalling && e.anim.paths[e.anim.moveLevel].y < e.anim.paths[0].y)
+            if (!this.isJumping && !this.isFalling && e.anim.paths[e.anim.moveLevel][1] < e.anim.paths[0][1])
                 this.y = e.y - this.h
 
-            if (e.anim.paths[e.anim.moveLevel].x < e.anim.paths[e.anim.moveLevel-1]?.x)
+            if (e.anim.paths[e.anim.moveLevel][0] < e.anim.paths[e.anim.moveLevel-1]?.[0])
                 this.x -= e.anim.speed
     
-            if (e.anim.paths[e.anim.moveLevel].x > e.anim.paths[e.anim.moveLevel+1]?.x)
+            if (e.anim.paths[e.anim.moveLevel]?.[0] > e.anim.paths[e.anim.moveLevel+1]?.[0])
                 this.x += e.anim.speed
         }
 

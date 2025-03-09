@@ -10,7 +10,17 @@ const LEVELS: Level[] = [
     {
         player: { x: 0, y: 560 },
         enemies: [
-            new Enemy(650, 560, 40, 40),
+            new Enemy(650, 560, 40, 40, {
+                // shoot: true,
+                // animPath: {
+                //     speed: 5,
+                //     paths: [{x:650, y: 360}, {x:350, y: 360}, {x:650, y: 360}]
+                // },
+                // act_defaults: {
+                //     direction: 'left',
+                //     shoot_cd: 500
+                // }
+            }),
         ],
         surfaces: [
             // new Entity(150, 550, 40, 40),
@@ -22,12 +32,12 @@ const LEVELS: Level[] = [
             //         paths: [{x: 500, y: 400}]
             //     }
             // }),
-            // new Entity(400, 510, 90, 20, {
-            //     animPath: {
-            //         speed: 3,
-            //         paths: [{x: 100, y: 510}]
-            //     }
-            // }),
+            new Entity(400, 510, 90, 20, {
+                animPath: {
+                    speed: 3,
+                    paths: [[100, 510]]
+                }
+            }),
         ],
         scores: [
             new Score(250, 480),
@@ -113,16 +123,23 @@ const LEVELS: Level[] = [
         enemies: [
             new Enemy(0, 560, 800, 40),
             new Enemy(285, 25, 20, 40, {
-                speed: 4,
-                paths: [{ x: 285, y: 210 }]
+                animPath: {
+                    speed: 4,
+                    paths: [[285,210]]
+                }
             }),
             new Enemy(500, 210, 20, 40, {
-                speed: 4,
-                paths: [{ x: 500, y: 25 }]
+                animPath: {
+                    speed: 4,
+                    paths: [[500, 25]]
+                }
             }),
             new Enemy(240, 270, 40, 20, {
-                speed: 4, interval_wait: 500,
-                paths: [{ x: 470, y: 260 }]
+                animPath: {
+                    speed: 4, 
+                    interval_wait: 500,
+                    paths: [[470,260]]
+                }
             }),
         ],
         surfaces: [

@@ -1,12 +1,34 @@
-import { ActionDefaults, AnimationArg, Maybe } from "../../interfaces/EntityTypes.js";
+import { Maybe, OptionalEnemyArgs } from "../../interfaces/EntityTypes.js";
 import Action from "./Action.js";
 
 
 class Enemy extends Action
 {
-    public constructor(x: number, y: number, w: number, h: number, animPath?: AnimationArg, act_defaults?: Maybe<ActionDefaults>)
+    private shooter:   Maybe<boolean>
+    private can_shoot: boolean
+
+
+    public constructor(x: number, y: number, w: number, h: number, args?: Maybe<OptionalEnemyArgs>)
     {
-        super(x, y, w, h, {color: '#e73737', animPath, act_defaults})
+        super(x, y, w, h, {...args, color: '#e73737'})
+
+        this.can_shoot = true
+        this.shooter   = args?.shoot
+    }
+
+
+    public override shoot(): void
+    {
+        if (this.shooter && this.can_shoot)
+            super.shoot()
+    }
+
+
+    public override toggleAnimation(should_move: boolean): void
+    {
+        super.toggleAnimation(should_move)
+
+        this.can_shoot = should_move
     }
 }
 

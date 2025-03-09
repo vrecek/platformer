@@ -1,4 +1,5 @@
-import { Bullet, BulletDirection, Maybe, OptionalArgs } from "../../interfaces/EntityTypes.js";
+import { Bullet, BulletDirection, HealthObject, Maybe, OptionalArgs, ShootDirection } from "../../interfaces/EntityTypes.js";
+import { ActionStats } from "../../interfaces/PlayerTypes.js";
 import Entity from "./Entity.js";
 
 
@@ -11,8 +12,9 @@ abstract class Action extends Entity
     private shots:        Bullet[]
     private bullet_speed: number
 
-    protected health:   number
-    protected last_dir: 'left' | 'right'
+    protected health:     number
+    protected def_health: number
+    protected last_dir:   ShootDirection
 
 
     protected constructor(x: number, y: number, w: number, h: number, args?: Maybe<OptionalArgs>)
@@ -21,10 +23,11 @@ abstract class Action extends Entity
 
         this.has_shot = false
         this.shots    = []
-        this.last_dir = 'right'
+        this.last_dir = args?.act_defaults?.direction ?? 'right'
 
-        this.shoot_cd = args?.act_defaults?.shoot_cd ?? 500
-        this.health   = args?.act_defaults?.health   ?? 10
+        this.shoot_cd   = args?.act_defaults?.shoot_cd ?? 500
+        this.health     = args?.act_defaults?.health   ?? 10
+        this.def_health = this.health
 
         this.bullet_cd    = 2000
         this.bullet_speed = args?.act_defaults?.bullet_speed ?? 6
@@ -72,6 +75,21 @@ abstract class Action extends Entity
     }
 
 
+    public set_health(v: number): void
+    {
+        this.health = v
+    }
+
+
+    public get_health(): HealthObject
+    {
+        return {
+            current: this.health,
+            default: this.def_health
+        }
+    }
+
+
     public drawShot(CTX: CanvasRenderingContext2D, b: Bullet): void
     {
         const {x, y} = b.obj.getStats()
@@ -104,6 +122,16 @@ abstract class Action extends Entity
     public setAttackDamage(v: number): void
     {
         this.bullet_dmg = v
+    }
+
+
+    public override getStats(): ActionStats
+    {
+        return {
+            ...super.getStats(),
+            health:     this.health,
+            def_health: this.def_health
+        }
     }
 }
 

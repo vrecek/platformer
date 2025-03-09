@@ -1,4 +1,4 @@
-import { AnimationObject, AnimationPath, CollisionCb, EntityPos, EntityStats, Maybe, OptionalArgs } from "../../interfaces/EntityTypes"
+import { AnimationObject, PathObj, CollisionCb, EntityPos, EntityStats, Maybe, OptionalArgs, Path } from "../../interfaces/EntityTypes"
 
 
 class Entity 
@@ -42,7 +42,7 @@ class Entity
             shouldMove: true,
             moveLevel: 1,
             paths: [
-                { x, y },
+                [x, y],
                 ...args.animPath.paths
             ]
 
@@ -50,32 +50,33 @@ class Entity
     }
 
 
-    private animationHandler(arg: 'x' | 'y', currentPath: AnimationPath): void
+    private animationHandler(arg: 'x' | 'y', currentPath: Path): void
     {
         if (!this.animation) return
 
-        if (this[arg] !== currentPath[arg])
+        const val: number = arg === 'x' ? currentPath[0] : currentPath[1]
+
+        if (this[arg] !== val)
         {
-            if (this[arg] < currentPath[arg]) 
+            if (this[arg] < val) 
             {
                 this[arg] += this.animation.speed 
 
-                if (this[arg] > currentPath[arg])
-                    this[arg] = currentPath[arg]
-
+                if (this[arg] > val)
+                    this[arg] = val
             } 
             else 
             {
                 this[arg] -= this.animation.speed
 
-                if (this[arg] < currentPath[arg])
-                    this[arg] = currentPath[arg]
+                if (this[arg] < val)
+                    this[arg] = val
             }
         }
     }
 
 
-    public draw(ctx: CanvasRenderingContext2D, color?: string, onlyBorders?: boolean): void
+    public draw(ctx: CanvasRenderingContext2D, color?: string): void
     {
         if (this?.animation?.shouldMove && this.animation.paths.length > 1 && !this.animation_wait)
         {
@@ -85,7 +86,7 @@ class Entity
             this.animationHandler('x', currentPath)
             this.animationHandler('y', currentPath)
 
-            if (this.x === currentPath.x && this.y === currentPath.y)
+            if (this.x === currentPath[0] && this.y === currentPath[1])
             {
                 this.animation_wait = true
                 
@@ -104,21 +105,11 @@ class Entity
             return
         }
 
-        const clr: string = color ?? this.color ?? "#000"
-
         ctx.beginPath()
         ctx.rect(this.x, this.y, this.w, this.h)
 
-        if (onlyBorders) 
-        {
-            ctx.strokeStyle = clr
-            ctx.stroke()
-        } 
-        else 
-        {
-            ctx.fillStyle = clr
-            ctx.fill()
-        }
+        ctx.fillStyle = color ?? this.color ?? "#000"
+        ctx.fill()
     }
 
     
@@ -142,6 +133,12 @@ class Entity
         if (!this.animation) return
             
         this.animation.shouldMove = should_move
+    }
+
+
+    public isAnimationEnabled(): boolean
+    {
+        return !!this.animation?.shouldMove
     }
 
 
