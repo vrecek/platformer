@@ -4,24 +4,30 @@ import Item from "../ts/entities/Item.js"
 import Platform from "../ts/entities/Platform.js"
 import Player from "../ts/entities/Player.js"
 import Score from "../ts/entities/Score.js"
-import { Bullet, CollisionCb, Maybe, Platforms } from "../interfaces/EntityTypes.js"
+import { Bullet, Maybe, Platforms } from "../interfaces/EntityTypes.js"
 import { EntityType, Level } from "../interfaces/GameTypes.js"
 import LEVELS from "../levels/Levels.js"
 import Action from "./entities/Action.js"
 import Enemy from "./entities/Enemy.js"
 import { ActivationObject } from "../interfaces/PlayerTypes.js"
+import WeaponItem from "./entities/WeaponItem.js"
 
+
+// ---------------------- ELEMENTS -------------------------
+
+const health_bar: HTMLElement      = document.querySelector('section.health div.bar div') as HTMLElement,
+      health_txt: Element          = document.querySelector('section.health p')!,
+      weapon_img: HTMLImageElement = document.querySelector('aside.eq section.weapon img') as HTMLImageElement
+
+// --------------------------------------------------------
 
 // ---------------------- CONSTS --------------------------
 
-const GAME: Game = new Game(LEVELS),
+const GAME: Game = new Game(LEVELS, 800, 600),
       CTX:  CanvasRenderingContext2D = GAME.getCtx()
 
 const DEFAULT_SPEED:  number = 3,
       DEFAULT_JUMP:   number = 5,
-      DEFAULT_ATTCD:  number = 500,
-      DEFAULT_BLTSPD: number = 6,
-      DEFAULT_ATTDMG: number = 1,
       EQ_COOLDOWN:    number = 200
 
 // --------------------------------------------------------
@@ -30,10 +36,8 @@ const DEFAULT_SPEED:  number = 3,
 // -------------------- ENTITIES --------------------------
 
 const PLAYER: Player = new Player(210, 30, 40, 40, DEFAULT_SPEED, DEFAULT_JUMP, {
-    bullet_dmg:   DEFAULT_ATTDMG,
-    bullet_speed: DEFAULT_BLTSPD,
-    shoot_cd:     DEFAULT_ATTCD,
-    health:       10
+    //weapon: new WeaponItem(0, 0, 'shotgun').getWeaponStats()
+    // weapon: getPistol()
 })
 
 // ------------------------------------------------------
@@ -51,12 +55,14 @@ let g_initPlayerPos: boolean      = false,
 // --------------------------------------------------------
 
 
-GAME.setWidth(800, 600)
+if (GAME.insufficientScreenHandler())
+    throw new Error('Terminated')
+
 
 GAME.update(() => {
     if (g_currentLevel)
     {
-        const { enemies, scores, surfaces, platforms, items } = g_currentLevel
+        const { enemies, scores, surfaces, platforms, items, weapons } = g_currentLevel
 
 
         if (!g_initPlayerPos)
@@ -68,39 +74,37 @@ GAME.update(() => {
         for (const ent of surfaces)
             ent.draw(CTX, '#3a8cf3')
 
-        for (const ent of [...scores, ...platforms, ...items] as Entity[])
+        for (const ent of [...scores, ...platforms, ...items, ...weapons] as Entity[])
             ent.draw(CTX)
 
-        for (const ent of [...enemies, PLAYER] as Action[])
+        for (const shooter of [...enemies, PLAYER] as Action[])
         {
-            ent.draw(CTX)
+            shooter.draw(CTX)
 
-            if (ent instanceof Enemy)
-                ent.shoot()
+            if (shooter instanceof Enemy)
+                shooter.shoot()
 
-            for (const bullet of ent.getShots() as Bullet[])
+            for (const bullet of shooter.getShots() as Bullet[])
             {
-                ent.drawShot(CTX, bullet)
+                shooter.drawShot(CTX, bullet)
 
-                bullet.obj.checkCollision(surfaces, () => ent.removeBullet(bullet.obj))
+                bullet.obj.checkCollision(surfaces, () => shooter.removeBullet(bullet.obj))
 
-                if (ent instanceof Enemy)
+                if (shooter instanceof Enemy)
                 {
-                    bullet.obj.checkCollision<Player>([PLAYER], (e: Player) => {
-                        ent.removeBullet(bullet.obj)
-
-                        if (ent.deal_damage(e))
-                            removeEntity('enemies', e.getStats().id)
+                    bullet.obj.checkCollision<Player>([PLAYER], (player: Player) => {
+                        shooter.removeBullet(bullet.obj)
+                        damagePlayer(player, shooter)
                     })
                 }
 
-                else if (ent instanceof Player)
+                else if (shooter instanceof Player)
                 {
-                    bullet.obj.checkCollision<Enemy>(enemies, (e: Enemy) => {
-                        ent.removeBullet(bullet.obj)
+                    bullet.obj.checkCollision<Enemy>(enemies, (enemy: Enemy) => {
+                        shooter.removeBullet(bullet.obj)
 
-                        if (ent.deal_damage(e))
-                            removeEntity('enemies', e.getStats().id)
+                        if (shooter.deal_damage(enemy))
+                            removeEntity('enemies', enemy.getStats().id)
                     })
                 }
             }
@@ -115,7 +119,8 @@ GAME.update(() => {
         PLAYER.checkCollision(enemies, collidedWithEnemy, unCollidedWithEnemy)
         PLAYER.checkCollision(surfaces, collidedWithSurface)
         PLAYER.checkCollision(scores, collidedWithScore)
-        PLAYER.checkCollision(items, collidedWithItem as CollisionCb)
+        PLAYER.checkCollision<WeaponItem>(weapons, collidedWithWeapon)
+        PLAYER.checkCollision(items, collidedWithItem)
 
         PLAYER.handleCanvasCollision(GAME.getCanvasStats())
 
@@ -128,20 +133,9 @@ GAME.update(() => {
     }
 })
 
-/* 
-RIGHT:
-top-middle-bottom
-bottom gitbub
-top label
-middle buttons
-*/
-
 GAME.updateLevelStats(1, g_currentLevel?.scores.length ?? 0)
-GAME.insufficientScreenHandler()
     
 PLAYER.initPressKeyEvents()
-
-
 PLAYER.addBinding('item_scroll-backwards', ['q'], () => activeItemSelector(true))
 PLAYER.addBinding('item_scroll-forwards',  ['e'], () => activeItemSelector())
 PLAYER.addBinding('item_drop',             ['z'], () => itemDrop())
@@ -154,10 +148,7 @@ PLAYER.addBinding('item_use', ['f'], () => {
     {
         const obj: ActivationObject = {
             init_jump:   DEFAULT_JUMP,
-            init_speed:  DEFAULT_SPEED,
-            init_attcd:  DEFAULT_ATTCD,
-            init_attdmg: DEFAULT_ATTDMG,
-            init_bltspd: DEFAULT_BLTSPD
+            init_speed:  DEFAULT_SPEED
         }
 
         if ( !PLAYER.items[i]?.activate(PLAYER, obj) )
@@ -169,7 +160,6 @@ PLAYER.addBinding('item_use', ['f'], () => {
         displayItems()
     }
 })
-
 
 // --------------- Funcs ------------------
 
@@ -192,7 +182,7 @@ const getActiveIndex = (): [Element[] | null, number] => {
     g_item_toggle = false
     setTimeout(() => g_item_toggle = true, EQ_COOLDOWN);
 
-    const eq: Element[] = [...document.querySelector('aside.eq article.items section')!.children]
+    const eq: Element[] = [...document.querySelector('aside.eq section.items section')!.children]
     let   i:  number    = eq.findIndex(x => x.classList.contains('active'))
 
     return [eq, i]
@@ -200,7 +190,7 @@ const getActiveIndex = (): [Element[] | null, number] => {
 
 
 const displayItems = (): void => {
-    const eq: Element[] = [...document.querySelector('aside.eq article.items section')!.children]
+    const eq: Element[] = [...document.querySelector('aside.eq section.items section')!.children]
 
     for (let i = 0; i < PLAYER.items.length; i++)
     {
@@ -210,6 +200,10 @@ const displayItems = (): void => {
         if (PLAYER.items[i])
             img.src = PLAYER.items[i]!.getStats().img!
     }
+}
+
+const displayWeapon = (): void => {
+    weapon_img.src = PLAYER.getWeaponDefaults()?.img ?? ''
 }
 
 
@@ -222,6 +216,12 @@ const activeItemToggler = (i: number, eq: Element[], backwards?: boolean): void 
         i = eq[i+1] ? i+1 : 0
 
     eq[i].classList.add('active')
+}
+
+
+const damagePlayer = (player: Player, shooter: Enemy): void => {
+    if (shooter.deal_damage(player) && PLAYER.isEffectActive('invincibility'))
+        player.set_health(1)
 }
 
 
@@ -247,6 +247,15 @@ const activeItemSelector = (backwards?: boolean): boolean => {
     activeItemToggler(i, eq, backwards)
 
     return true
+}
+
+// ------------------- COLLISION FNS -----------------------
+
+const collidedWithWeapon = (weapon: WeaponItem): void => {
+    removeEntity('weapons', weapon.getStats().id)
+
+    PLAYER.setWeapon(weapon.getWeaponStats())
+    displayWeapon()
 }
 
 
@@ -292,26 +301,6 @@ const collidedWithPlatform = (platform: Platform): void => {
 }
 
 
-const unCollidedWithPlatform = (platform: Platform): void => {
-    switch (platform.getStats().name)
-    {
-        case 'speed':
-            if (PLAYER.isEffectActive('speed', true))
-                return
-
-            PLAYER.removeActiveEffect('speed')
-            PLAYER.setPlayerSpeed(DEFAULT_SPEED)
-
-            break
-    }
-}
-
-
-const removeEntity = (type: EntityType, id: string): void => {
-    g_currentLevel![type] = PLAYER.delete_entity(g_currentLevel![type], id)
-}
-
-
 const collidedWithScore = (score: Score): void => {
     GAME.updateScoreText(1)
     removeEntity('scores', score.getStats().id)
@@ -340,12 +329,6 @@ const collidedWithSurface = (ent: Entity): void => {
 }
 
 
-const unCollidedWithEnemy = (): void => {
-    g_collidedE = null
-    PLAYER.setImage("/data/player/player.svg")
-}
-
-
 const collidedWithEnemy = (enemy: Entity): void => {
     if (PLAYER.isEffectActive('invincibility'))
     {
@@ -359,6 +342,35 @@ const collidedWithEnemy = (enemy: Entity): void => {
     }
 
     PLAYER.set_health(0)
+}
+
+
+
+const unCollidedWithEnemy = (): void => {
+    g_collidedE = null
+    PLAYER.setImage("/data/player/player.svg")
+}
+
+
+const unCollidedWithPlatform = (platform: Platform): void => {
+    switch (platform.getStats().name)
+    {
+        case 'speed':
+            if (PLAYER.isEffectActive('speed', true))
+                return
+
+            PLAYER.removeActiveEffect('speed')
+            PLAYER.setPlayerSpeed(DEFAULT_SPEED)
+
+            break
+    }
+}
+
+// --------------------------------------------------------
+
+
+const removeEntity = (type: EntityType, id: string): void => {
+    g_currentLevel![type] = PLAYER.delete_entity(g_currentLevel![type], id)
 }
 
 
@@ -415,14 +427,15 @@ const updateHealth = (): void => {
     if (health === g_healthbefore)
         return
 
+    let perc: number = (100 * health) / def_health
+
+    if (perc < 0) 
+        perc = 0
+
     g_healthbefore = health
-
-    const perc: number      = (100 * health) / def_health,
-          h:    HTMLElement = document.querySelector('section.health div.bar div') as HTMLElement,
-          p:    Element     = document.querySelector('section.health p')!
-
-    h.style.width = `${perc}%`
-    p.textContent = `${perc}`
+    
+    health_bar.style.width  = `${perc}%`
+    health_txt.textContent  = `${perc}`
 }
 
 

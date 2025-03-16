@@ -21,11 +21,9 @@ export type EntityPos = {
 }
 
 export type ActionDefaults = {
-    shoot_cd?:     number
-    bullet_dmg?:   number
-    bullet_speed?: number
-    health?:       number
-    direction?:    ShootDirection
+    weapon?:    Weapon
+    health?:    number
+    direction?: ShootDirection
 }
 
 export type EntityStats = {
@@ -74,8 +72,11 @@ export type Pos = {
 }
 
 export type Bullet = {
-    obj: Entity
-    dir: BulletDirection
+    obj:  Entity
+    dir:  BulletDirection
+    dirX: number
+    dirY: number
+
 }
 
 export type BulletDirection = 1 | -1
@@ -84,3 +85,29 @@ export type HealthObject = {
     default: number
     current: number
 }
+
+export type Weapon = {
+    type:  WeaponType
+    stats: PistolWeapon | ShotgunWeapon
+    img:   string
+}
+
+export type WeaponCommon = {
+    [key in WeaponStat]: number
+}
+
+export type PistolWeapon = WeaponCommon & {
+
+}
+
+export type ShotgunWeapon = WeaponCommon & {
+    angle_start: number
+    angle_step:  number
+    bullet_nr:   number
+}
+
+export type WeaponStats = PistolWeapon | ShotgunWeapon
+
+export type WeaponType = 'pistol' | 'shotgun'
+
+export type WeaponStat = 'bullet_speed' | 'bullet_dmg' | 'shoot_cd'

@@ -1,5 +1,5 @@
 import Entity from "./Entity.js";
-import { Effects, Items, Maybe } from "../../interfaces/EntityTypes.js";
+import { Effects, Items, Maybe, Weapon } from "../../interfaces/EntityTypes.js";
 import { Fn } from "../../interfaces/GameTypes.js";
 import Player from "./Player.js";
 import { ActivationObject } from "../../interfaces/PlayerTypes.js";
@@ -59,8 +59,8 @@ class Item extends Entity
         const INTERVAL_LENGTH: number = 50,
               SIZE:            number = 30
 
-        let image:           string = ""
-        let DURATION_LENGTH: number = 0
+        let image:           string = "",
+            duration_length: number = 0
 
 
         switch (type)
@@ -91,7 +91,7 @@ class Item extends Entity
 
 
             case 'jumpboost': 
-                DURATION_LENGTH = 4000
+                duration_length = 4000
                 image           = '/data/items/item_jumpboost.svg'
 
                 super(x, y, SIZE, SIZE, {image, name: type})
@@ -99,7 +99,7 @@ class Item extends Entity
                 this.activate_fn = (plr: Player, {init_jump}): boolean => {
                     this.set_finish(() => plr.setPlayerJumpPower(init_jump))
 
-                    return this.initEffect(plr, type, DURATION_LENGTH, INTERVAL_LENGTH, () => {
+                    return this.initEffect(plr, type, duration_length, INTERVAL_LENGTH, () => {
                             
                         plr.setPlayerJumpPower(10)
                         return true
@@ -111,7 +111,7 @@ class Item extends Entity
 
 
             case 'speed':
-                DURATION_LENGTH = 4000
+                duration_length = 4000
                 image           = '/data/items/item_speed.svg'
 
                 super(x, y, SIZE, SIZE, {image, name: type})
@@ -119,7 +119,7 @@ class Item extends Entity
                 this.activate_fn = (plr: Player, {init_speed}): boolean => {
                     this.set_finish(() => plr.setPlayerSpeed(init_speed))
 
-                    return this.initEffect(plr, type, DURATION_LENGTH, INTERVAL_LENGTH, () => {
+                    return this.initEffect(plr, type, duration_length, INTERVAL_LENGTH, () => {
 
                         if (!plr.isTouchingGround())
                             return false
@@ -135,13 +135,13 @@ class Item extends Entity
 
 
             case 'invincibility':
-                DURATION_LENGTH = 4000
+                duration_length = 4000
                 image           = '/data/items/item_invincibility.svg'
 
                 super(x, y, SIZE, SIZE, {image, name: type})
 
                 this.activate_fn = (plr: Player): boolean => {
-                    return this.initEffect(plr, type, DURATION_LENGTH, INTERVAL_LENGTH, () => {
+                    return this.initEffect(plr, type, duration_length, INTERVAL_LENGTH, () => {
                         return true    
                     })
                 }
@@ -150,17 +150,22 @@ class Item extends Entity
 
 
             case 'attackspeed':
-                DURATION_LENGTH = 4000
+                duration_length = 4000
                 image           = '/data/items/item_rifle.svg'
 
                 super(x, y, SIZE, SIZE, {image, name: type})
 
-                this.activate_fn = (plr: Player, {init_attcd, init_bltspd}): boolean => {
-                    this.set_finish(() => { plr.setAttackCooldown(init_attcd); plr.setBulletSpeed(init_bltspd) })
+                this.activate_fn = (plr: Player): boolean => {
+                    this.set_finish(() => { 
+                        plr.setWeaponStats('shoot_cd', 'default')
+                        plr.setWeaponStats('bullet_speed', 'default') 
+                    })
 
-                    return this.initEffect(plr, type, DURATION_LENGTH, INTERVAL_LENGTH, () => {
-                        plr.setAttackCooldown(200)
-                        plr.setBulletSpeed(9)
+                    const stats: Weapon = plr.getWeaponDefaults()!
+
+                    return this.initEffect(plr, type, duration_length, INTERVAL_LENGTH, () => {
+                        plr.setWeaponStats('shoot_cd', stats.stats.shoot_cd / 1.5)
+                        plr.setWeaponStats('bullet_speed', stats.stats.bullet_speed + 2)
                         return true
                         
                     }, this.finish_fn)
@@ -170,16 +175,16 @@ class Item extends Entity
 
 
             case 'attackdmg':
-                DURATION_LENGTH = 4000
+                duration_length = 4000
                 image           = '/data/items/item_damage.svg'
 
                 super(x, y, SIZE, SIZE, {image, name: type})
 
-                this.activate_fn = (plr: Player, {init_attdmg}): boolean => {
-                    this.set_finish(() => { plr.setAttackDamage(init_attdmg); plr.setImage('/data/player/player.svg') })
+                this.activate_fn = (plr: Player): boolean => {
+                    this.set_finish(() => { plr.setWeaponStats('bullet_dmg', 'default'); plr.setImage('/data/player/player.svg') })
 
-                    return this.initEffect(plr, type, DURATION_LENGTH, INTERVAL_LENGTH, () => {
-                        plr.setAttackDamage(5)
+                    return this.initEffect(plr, type, duration_length, INTERVAL_LENGTH, () => {
+                        plr.setWeaponStats('bullet_dmg', plr.getWeaponDefaults()!.stats.bullet_dmg * 1.5)
                         plr.setImage('/data/player/player_mad.svg')
 
                         return true
@@ -211,7 +216,7 @@ class Item extends Entity
 
     public getEffectContainer(effect: string, as_animation_bar?: boolean): HTMLElement
     {
-        return document.querySelector(`article.effects div.effect-${effect} ${as_animation_bar ? "div.bar div" : ""}`)!
+        return document.querySelector(`section.effects div.effect-${effect} ${as_animation_bar ? "div.bar div" : ""}`)!
     }
 
 

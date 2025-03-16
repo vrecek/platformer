@@ -4,22 +4,26 @@ import Item from '../ts/entities/Item.js'
 import Platform from '../ts/entities/Platform.js'
 import Score from '../ts/entities/Score.js'
 import Enemy from '../ts/entities/Enemy.js'
+import WeaponItem from '../ts/entities/WeaponItem.js'
 
 
 const LEVELS: Level[] = [
     {
         player: { x: 0, y: 560 },
+        weapons: [
+            new WeaponItem(450, 540, 'shotgun')
+        ],
         enemies: [
             new Enemy(650, 560, 40, 40, {
-                // shoot: true,
+                shoot: true,
                 // animPath: {
                 //     speed: 5,
-                //     paths: [{x:650, y: 360}, {x:350, y: 360}, {x:650, y: 360}]
+                //     paths: [[650, 360], [350, 360], [650, 360]]
                 // },
-                // act_defaults: {
-                //     direction: 'left',
-                //     shoot_cd: 500
-                // }
+                act_defaults: {
+                    direction: 'left',
+                    //weapon: new WeaponItem(0, 0, 'shotgun').getWeaponStats()
+                }
             }),
         ],
         surfaces: [
@@ -32,12 +36,12 @@ const LEVELS: Level[] = [
             //         paths: [{x: 500, y: 400}]
             //     }
             // }),
-            new Entity(400, 510, 90, 20, {
-                animPath: {
-                    speed: 3,
-                    paths: [[100, 510]]
-                }
-            }),
+            // new Entity(400, 510, 90, 20, {
+            //     animPath: {
+            //         speed: 3,
+            //         paths: [[100, 510]]
+            //     }
+            // }),
         ],
         scores: [
             new Score(250, 480),
@@ -55,7 +59,6 @@ const LEVELS: Level[] = [
             new Item(300, 550, 'jumpboost'),
             new Item(350, 550, 'attackspeed'),
             new Item(400, 550, 'speed'),
-            new Item(450, 550, 'speed'),
         ]
     },
 
@@ -120,6 +123,7 @@ const LEVELS: Level[] = [
     
     {
         player: { x: 20, y: 40 },
+        weapons: [],
         enemies: [
             new Enemy(0, 560, 800, 40),
             new Enemy(285, 25, 20, 40, {

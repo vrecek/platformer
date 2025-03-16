@@ -27,7 +27,4 @@ export type PlayerEq = (Item | null)[]
 export type ActivationObject = {
     init_jump:   number
     init_speed:  number
-    init_attcd:  number
-    init_attdmg: number
-    init_bltspd: number
 }

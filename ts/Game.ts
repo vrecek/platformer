@@ -13,7 +13,7 @@ class Game
     private totalPoints: number
 
 
-    public constructor(levels: Level[])
+    public constructor(levels: Level[], w: number, h: number)
     {
         this.canvas = document.querySelector('canvas')!
         this.ctx    = this.canvas.getContext('2d')!
@@ -23,6 +23,8 @@ class Game
         this.level       = 1
         this.points      = 0
         this.totalPoints = 0
+
+        this.setWidth(w, h)
     }
 
 
