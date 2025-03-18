@@ -4,7 +4,7 @@ import Item from "../ts/entities/Item.js"
 import Platform from "../ts/entities/Platform.js"
 import Player from "../ts/entities/Player.js"
 import Score from "../ts/entities/Score.js"
-import { Bullet, Maybe, Platforms } from "../interfaces/EntityTypes.js"
+import { Bullet, Maybe, Platforms, Weapon, WeaponCommon } from "../interfaces/EntityTypes.js"
 import { EntityType, Level } from "../interfaces/GameTypes.js"
 import LEVELS from "../levels/Levels.js"
 import Action from "./entities/Action.js"
@@ -17,7 +17,9 @@ import WeaponItem from "./entities/WeaponItem.js"
 
 const health_bar: HTMLElement      = document.querySelector('section.health div.bar div') as HTMLElement,
       health_txt: Element          = document.querySelector('section.health p')!,
-      weapon_img: HTMLImageElement = document.querySelector('aside.eq section.weapon img') as HTMLImageElement
+      weapon_img: HTMLImageElement = document.querySelector('aside.eq section.weapon img') as HTMLImageElement,
+      ammo_curr:  HTMLElement      = document.querySelector('section.ammo span.curr') as HTMLElement,
+      ammo_total: HTMLElement      = document.querySelector('section.ammo span.total') as HTMLElement  
 
 // --------------------------------------------------------
 
@@ -36,8 +38,10 @@ const DEFAULT_SPEED:  number = 3,
 // -------------------- ENTITIES --------------------------
 
 const PLAYER: Player = new Player(210, 30, 40, 40, DEFAULT_SPEED, DEFAULT_JUMP, {
-    //weapon: new WeaponItem(0, 0, 'shotgun').getWeaponStats()
-    // weapon: getPistol()
+    // weapon: new WeaponItem(0, 0, 'rocketlauncher').getWeaponStats()
+    weapon: new WeaponItem(0, 0, 'smg').getWeaponStats()
+    // weapon: new WeaponItem(0, 0, 'shotgun').getWeaponStats()
+    // weapon: new WeaponItem(0, 0, 'pistol').getWeaponStats()
 })
 
 // ------------------------------------------------------
@@ -54,92 +58,109 @@ let g_initPlayerPos: boolean      = false,
 
 // --------------------------------------------------------
 
-
-if (GAME.insufficientScreenHandler())
-    throw new Error('Terminated')
-
-
-GAME.update(() => {
-    if (g_currentLevel)
-    {
-        const { enemies, scores, surfaces, platforms, items, weapons } = g_currentLevel
-
-
-        if (!g_initPlayerPos)
+// current ammo / total ammo / per magazine
+// reloads
+const init = () => {
+    if (GAME.insufficientScreenHandler())
+        return
+    
+    
+    GAME.update(() => {
+        if (g_currentLevel)
         {
-            PLAYER.setPosition(g_currentLevel.player.x, g_currentLevel.player.y)
-            g_initPlayerPos = true
-        }
-
-        for (const ent of surfaces)
-            ent.draw(CTX, '#3a8cf3')
-
-        for (const ent of [...scores, ...platforms, ...items, ...weapons] as Entity[])
-            ent.draw(CTX)
-
-        for (const shooter of [...enemies, PLAYER] as Action[])
-        {
-            shooter.draw(CTX)
-
-            if (shooter instanceof Enemy)
-                shooter.shoot()
-
-            for (const bullet of shooter.getShots() as Bullet[])
+            const { enemies, scores, surfaces, platforms, items, weapons } = g_currentLevel
+    
+    
+            if (!g_initPlayerPos)
             {
-                shooter.drawShot(CTX, bullet)
-
-                bullet.obj.checkCollision(surfaces, () => shooter.removeBullet(bullet.obj))
-
+                PLAYER.setPosition(g_currentLevel.player.x, g_currentLevel.player.y)
+                g_initPlayerPos = true
+            }
+    
+            for (const ent of surfaces)
+                ent.draw(CTX, '#3a8cf3')
+    
+            for (const ent of [...scores, ...platforms, ...items, ...weapons] as Entity[])
+                ent.draw(CTX)
+    
+            for (const shooter of [...enemies, PLAYER] as Action[])
+            {
+                shooter.draw(CTX)
+    
+                // Enemy shoot
                 if (shooter instanceof Enemy)
+                    shooter.shoot()
+    
+                // Each bullet
+                for (const bullet of shooter.getShots() as Bullet[])
                 {
-                    bullet.obj.checkCollision<Player>([PLAYER], (player: Player) => {
+                    shooter.drawShot(CTX, bullet)
+    
+                    // Bullet collided with a surface
+                    bullet.obj.checkCollision(surfaces, () => shooter.removeBullet(bullet.obj))
+    
+                    // Bullet collided with a canvas
+                    if (GAME.isCollided(bullet.obj).length)
                         shooter.removeBullet(bullet.obj)
-                        damagePlayer(player, shooter)
-                    })
-                }
-
-                else if (shooter instanceof Player)
-                {
-                    bullet.obj.checkCollision<Enemy>(enemies, (enemy: Enemy) => {
-                        shooter.removeBullet(bullet.obj)
-
-                        if (shooter.deal_damage(enemy))
-                            removeEntity('enemies', enemy.getStats().id)
-                    })
+    
+                    if (shooter instanceof Enemy)
+                    {
+                        // Enemy bullet
+                        bullet.obj.checkCollision<Player>([PLAYER], (player: Player) => {
+                            shooter.removeBullet(bullet.obj)
+                            shooter.deal_damage(player, bullet)
+                        })
+                    }
+    
+                    else if (shooter instanceof Player)
+                    {
+                        // Player bullet
+                        bullet.obj.checkCollision<Action>([...enemies, PLAYER], (enemy: Action) => {
+                            shooter.removeBullet(bullet.obj)
+    
+                            // Remove an enemy
+                            if (shooter.deal_damage(enemy, bullet))
+                                removeEntity('enemies', enemy.getStats().id)
+                        })
+                    }
                 }
             }
-        }
-
-        if (g_stopped) return
-
-        PLAYER.handleGravity(PLAYER.checkCollision(surfaces), GAME.getCanvasStats())
-        PLAYER.resetBlockedKeys()
-
-        PLAYER.checkCollision(platforms, collidedWithPlatform, unCollidedWithPlatform)
-        PLAYER.checkCollision(enemies, collidedWithEnemy, unCollidedWithEnemy)
-        PLAYER.checkCollision(surfaces, collidedWithSurface)
-        PLAYER.checkCollision(scores, collidedWithScore)
-        PLAYER.checkCollision<WeaponItem>(weapons, collidedWithWeapon)
-        PLAYER.checkCollision(items, collidedWithItem)
-
-        PLAYER.handleCanvasCollision(GAME.getCanvasStats())
-
-        updateHealth()
-
-        if (PLAYER.get_health().current <= 0)
-            player_dead_handler()
-
-        PLAYER.handleAdvancedMoveKeys()
-    }
-})
-
-GAME.updateLevelStats(1, g_currentLevel?.scores.length ?? 0)
     
-PLAYER.initPressKeyEvents()
-PLAYER.addBinding('item_scroll-backwards', ['q'], () => activeItemSelector(true))
-PLAYER.addBinding('item_scroll-forwards',  ['e'], () => activeItemSelector())
-PLAYER.addBinding('item_drop',             ['z'], () => itemDrop())
-PLAYER.addBinding('player_shoot',          ['x'], () => PLAYER.shoot())
+            if (g_stopped) return
+    
+            PLAYER.handleGravity(PLAYER.checkCollision(surfaces), GAME.getCanvasStats())
+            PLAYER.resetBlockedKeys()
+    
+            PLAYER.checkCollision(platforms, collidedWithPlatform, unCollidedWithPlatform)
+            PLAYER.checkCollision(enemies, collidedWithEnemy, unCollidedWithEnemy)
+            PLAYER.checkCollision(surfaces, collidedWithSurface)
+            PLAYER.checkCollision(scores, collidedWithScore)
+            PLAYER.checkCollision(weapons, collidedWithWeapon)
+            PLAYER.checkCollision(items, collidedWithItem)
+    
+            PLAYER.handleCanvasCollision(GAME.isCollided(PLAYER), GAME.getCanvasStats())
+    
+            updateHealth()
+    
+            if (PLAYER.getStats().health <= 0)
+                player_dead_handler()
+    
+            PLAYER.handleAdvancedMoveKeys()
+        }
+    })
+    
+    GAME.updateLevelStats(1, g_currentLevel?.scores.length ?? 0)
+        
+    PLAYER.initPressKeyEvents()
+    PLAYER.addBinding('item_scroll-backwards', ['q'], () => activeItemSelector(true))
+    PLAYER.addBinding('item_scroll-forwards',  ['e'], () => activeItemSelector())
+    PLAYER.addBinding('item_drop',             ['z'], () => itemDrop())
+    PLAYER.addBinding('player_shoot',          ['x'], () => playerShoot())
+    
+    displayWeapon()
+    displayAmmo()
+}
+
 
 PLAYER.addBinding('item_use', ['f'], () => {
     const [eq, i] = getActiveIndex()
@@ -175,6 +196,7 @@ document.querySelector('section.lvl button')?.addEventListener('click', (e: Even
 })
 
 
+
 const getActiveIndex = (): [Element[] | null, number] => {
     if (!g_item_toggle) 
         return [null, -1]
@@ -202,8 +224,18 @@ const displayItems = (): void => {
     }
 }
 
+
 const displayWeapon = (): void => {
     weapon_img.src = PLAYER.getWeaponDefaults()?.img ?? ''
+}
+
+
+const displayAmmo = (): void => {
+    const mag: string = `${PLAYER.getWeapon()?.stats.mag_ammo}` || '-',
+          tot: string = `${PLAYER.getWeaponDefaults()?.stats.total_ammo}` || '-'
+
+    ammo_curr.textContent  = `${mag}`
+    ammo_total.textContent = `${tot}`
 }
 
 
@@ -219,12 +251,6 @@ const activeItemToggler = (i: number, eq: Element[], backwards?: boolean): void 
 }
 
 
-const damagePlayer = (player: Player, shooter: Enemy): void => {
-    if (shooter.deal_damage(player) && PLAYER.isEffectActive('invincibility'))
-        player.set_health(1)
-}
-
-
 const itemDrop = (): void => {
     const [eq, i] = getActiveIndex()
 
@@ -236,6 +262,12 @@ const itemDrop = (): void => {
         activeItemToggler(i, eq)
         displayItems()
     }
+}
+
+
+const playerShoot = (): void => {
+    PLAYER.shoot()
+    displayAmmo()
 }
 
 
@@ -256,6 +288,7 @@ const collidedWithWeapon = (weapon: WeaponItem): void => {
 
     PLAYER.setWeapon(weapon.getWeaponStats())
     displayWeapon()
+    displayAmmo()
 }
 
 
@@ -427,6 +460,9 @@ const updateHealth = (): void => {
     if (health === g_healthbefore)
         return
 
+    if (health <= 0 && PLAYER.isEffectActive('invincibility'))
+        PLAYER.set_health(1)
+
     let perc: number = (100 * health) / def_health
 
     if (perc < 0) 
@@ -434,8 +470,8 @@ const updateHealth = (): void => {
 
     g_healthbefore = health
     
-    health_bar.style.width  = `${perc}%`
-    health_txt.textContent  = `${perc}`
+    health_bar.style.width = `${perc}%`
+    health_txt.textContent = `${perc}`
 }
 
 
@@ -488,3 +524,6 @@ const removeAllEffects = (): void => {
     for (const x of PLAYER.getActiveEffects())
         Item.zeroEffectContainer(PLAYER, x)
 }
+
+
+init()

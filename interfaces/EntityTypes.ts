@@ -72,12 +72,22 @@ export type Pos = {
 }
 
 export type Bullet = {
-    obj:  Entity
-    dir:  BulletDirection
-    dirX: number
-    dirY: number
-
+    obj:       Entity
+    type:      BulletType
+    dir:       BulletDirection
+    dirX:      number
+    dirY:      number
+    //rad?:number,ang?:number
+    explosionObj?: ExplosionBulletObject
 }
+
+export type ExplosionBulletObject = {
+    sizeStep: number
+    affected: string[]
+    timeout?: number
+}
+
+export type BulletType = 'regular' | 'explosive' | 'explosion'
 
 export type BulletDirection = 1 | -1
 
@@ -87,9 +97,10 @@ export type HealthObject = {
 }
 
 export type Weapon = {
-    type:  WeaponType
-    stats: PistolWeapon | ShotgunWeapon
-    img:   string
+    type:     WeaponType
+    inf_ammo: boolean
+    stats:    WeaponCommon | ShotgunWeapon
+    img:      string
 }
 
 export type WeaponCommon = {
@@ -108,6 +119,7 @@ export type ShotgunWeapon = WeaponCommon & {
 
 export type WeaponStats = PistolWeapon | ShotgunWeapon
 
-export type WeaponType = 'pistol' | 'shotgun'
+export type WeaponType = 'pistol' | 'shotgun' | 'smg' | 'rocketlauncher'
 
-export type WeaponStat = 'bullet_speed' | 'bullet_dmg' | 'shoot_cd'
+export type WeaponStat = 'bullet_speed' | 'bullet_dmg' | 'shoot_cd' | 
+                         'mag_ammo' | 'total_ammo' | 'reload_time'

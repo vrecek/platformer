@@ -76,7 +76,7 @@ class Entity
     }
 
 
-    public draw(ctx: CanvasRenderingContext2D, color?: string): void
+    public draw(ctx: CanvasRenderingContext2D, color?: string, asCircle?: boolean): void
     {
         if (this?.animation?.shouldMove && this.animation.paths.length > 1 && !this.animation_wait)
         {
@@ -106,7 +106,10 @@ class Entity
         }
 
         ctx.beginPath()
-        ctx.rect(this.x, this.y, this.w, this.h)
+
+        asCircle 
+            ? ctx.arc(this.x, this.y, this.w, 0, Math.PI * 2)
+            : ctx.rect(this.x, this.y, this.w, this.h)
 
         ctx.fillStyle = color ?? this.color ?? "#000"
         ctx.fill()
@@ -161,6 +164,13 @@ class Entity
     }
 
 
+    public setSize(w?: number, h?: number): void
+    {
+        if (w) this.w = w
+        if (h) this.h = h
+    }
+
+
     public getPosition(): EntityPos
     {
         return {
@@ -170,7 +180,8 @@ class Entity
     }
 
     
-    public checkCollision<T extends Entity>(entities: T[], collidedFn?: CollisionCb<T>, uncollidedFn?: Maybe<CollisionCb<T>>): T | null {
+    public checkCollision<T extends Entity>(entities: T[], collidedFn?: CollisionCb<T>, uncollidedFn?: Maybe<CollisionCb<T>>): T | null
+    {
         let collidedEntity: T | null = null
 
         for (const ent of entities) 

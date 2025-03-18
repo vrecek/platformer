@@ -34,6 +34,20 @@ aside {
             }
         }
 
+        section.ammo {
+            display: flex;
+            align-items: center;
+
+            section {
+                margin-left: .5em;
+
+                span {
+                    font-weight: 800;
+                    font-size: 2.75rem;
+                }
+            }
+        }
+
         section.health {
             p {
                 font-weight: bold;

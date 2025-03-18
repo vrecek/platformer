@@ -11,7 +11,7 @@ const LEVELS: Level[] = [
     {
         player: { x: 0, y: 560 },
         weapons: [
-            new WeaponItem(450, 540, 'shotgun')
+            new WeaponItem(450, 540, 'smg')
         ],
         enemies: [
             new Enemy(650, 560, 40, 40, {
@@ -22,7 +22,7 @@ const LEVELS: Level[] = [
                 // },
                 act_defaults: {
                     direction: 'left',
-                    //weapon: new WeaponItem(0, 0, 'shotgun').getWeaponStats()
+                    // weapon: new WeaponItem(0, 0, 'rocketlauncher').getWeaponStats()
                 }
             }),
         ],

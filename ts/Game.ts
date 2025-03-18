@@ -1,4 +1,5 @@
-import { CanvasStats, Level, LevelLoader, VoidFn } from "../interfaces/GameTypes"
+import { CanvasStats, CollisionValues, Level, LevelLoader, VoidFn } from "../interfaces/GameTypes"
+import Entity from "./entities/Entity"
 
 
 class Game
@@ -25,6 +26,23 @@ class Game
         this.totalPoints = 0
 
         this.setWidth(w, h)
+    }
+
+
+    public isCollided(ent: Entity): CollisionValues[]
+    {
+        const cw = this.canvas.width,
+              ch = this.canvas.height,
+              s  = ent.getStats()
+
+        const vals: CollisionValues[] = []
+
+        if (s.y <= 0)          vals.push('top')
+        if (s.x <= 0)          vals.push('left')
+        if ((s.y + s.h) >= ch) vals.push('bottom')
+        if (s.x + s.w >= cw)   vals.push('right')
+
+        return vals
     }
 
 

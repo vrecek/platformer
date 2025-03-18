@@ -13,6 +13,8 @@ export type KeysInput = {
     pressedKeys: string[]
 }
 
+export type CollisionValues = 'top' | 'right' | 'bottom' | 'left' | null
+
 export type CanvasStats = {
     w: number
     h: number

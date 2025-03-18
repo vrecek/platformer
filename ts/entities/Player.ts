@@ -1,6 +1,6 @@
 import Entity from "./Entity.js"
 import { ActionDefaults, Effects, EntityStats, Maybe } from "../../interfaces/EntityTypes.js"
-import { CanvasStats, KeysInput } from "../../interfaces/GameTypes.js"
+import { CanvasStats, CollisionValues, KeysInput } from "../../interfaces/GameTypes.js"
 import { Bindings, PlayerEq, PlayerStats } from "../../interfaces/PlayerTypes.js"
 import Item from "./Item.js"
 import Action from "./Action.js"
@@ -162,33 +162,34 @@ class Player extends Action
     }
 
 
-    public handleCanvasCollision(canvas: CanvasStats): void 
+    public handleCanvasCollision(v: CollisionValues[], c: CanvasStats): void 
     {
-        const plrYHeight: number = this.y + this.h
-
-
-        if (this.y <= 0) {
+        if (v.includes('top'))
+        {
             this.isFalling = true
             this.isJumping = false
+            this.y         = this.COLL_PADDING
 
-            this.y = this.COLL_PADDING
             this.blockAction('jump')
         }
-        
-        if (this.x <= 0)
+
+        if (v.includes('right'))
+        {
+            this.x = c.w - this.w
+            this.blockAction('right')
+        }
+
+        if (v.includes('bottom'))
+        {
+            this.y = c.h - this.h
+            this.blockedKeys.add('s')
+        }
+
+        if (v.includes('left'))
         {
             this.x = 0
             this.blockAction('left')
         }
-
-        if (plrYHeight >= canvas.h) {
-            this.y = canvas.h - this.h
-
-            this.blockedKeys.add('s')
-        }
-
-        if (this.x + this.w >= canvas.w)
-            this.blockAction('right')
     }
 
 
@@ -348,6 +349,12 @@ class Player extends Action
     public resetBlockedKeys(): void 
     {
         this.blockedKeys.clear()
+    }
+
+
+    public blockKey(): void
+    {
+
     }
 
 
