@@ -38,8 +38,8 @@ const DEFAULT_SPEED:  number = 3,
 // -------------------- ENTITIES --------------------------
 
 const PLAYER: Player = new Player(210, 30, 40, 40, DEFAULT_SPEED, DEFAULT_JUMP, {
-    // weapon: new WeaponItem(0, 0, 'rocketlauncher').getWeaponStats()
-    weapon: new WeaponItem(0, 0, 'smg').getWeaponStats()
+    weapon: new WeaponItem(0, 0, 'rocketlauncher').getWeaponStats()
+    // weapon: new WeaponItem(0, 0, 'smg').getWeaponStats()
     // weapon: new WeaponItem(0, 0, 'shotgun').getWeaponStats()
     // weapon: new WeaponItem(0, 0, 'pistol').getWeaponStats()
 })
@@ -58,8 +58,6 @@ let g_initPlayerPos: boolean      = false,
 
 // --------------------------------------------------------
 
-// current ammo / total ammo / per magazine
-// reloads
 const init = () => {
     if (GAME.insufficientScreenHandler())
         return
@@ -141,6 +139,7 @@ const init = () => {
             PLAYER.handleCanvasCollision(GAME.isCollided(PLAYER), GAME.getCanvasStats())
     
             updateHealth()
+            reloadDisplay()
     
             if (PLAYER.getStats().health <= 0)
                 player_dead_handler()
@@ -156,6 +155,7 @@ const init = () => {
     PLAYER.addBinding('item_scroll-forwards',  ['e'], () => activeItemSelector())
     PLAYER.addBinding('item_drop',             ['z'], () => itemDrop())
     PLAYER.addBinding('player_shoot',          ['x'], () => playerShoot())
+    PLAYER.addBinding('reload_weapon',         ['r'], () => PLAYER.reload(displayAmmo))
     
     displayWeapon()
     displayAmmo()
@@ -230,9 +230,15 @@ const displayWeapon = (): void => {
 }
 
 
+const reloadDisplay = (): void => {
+    if (PLAYER.getWeapon()?.is_reloading)
+        PLAYER.reloadIndicator(CTX)
+}
+
+
 const displayAmmo = (): void => {
     const mag: string = `${PLAYER.getWeapon()?.stats.mag_ammo}` || '-',
-          tot: string = `${PLAYER.getWeaponDefaults()?.stats.total_ammo}` || '-'
+          tot: string = `${PLAYER.getWeapon()?.stats.total_ammo}` || '-'
 
     ammo_curr.textContent  = `${mag}`
     ammo_total.textContent = `${tot}`
@@ -266,7 +272,7 @@ const itemDrop = (): void => {
 
 
 const playerShoot = (): void => {
-    PLAYER.shoot()
+    PLAYER.shoot(displayAmmo)
     displayAmmo()
 }
 

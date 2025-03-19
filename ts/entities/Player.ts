@@ -352,12 +352,6 @@ class Player extends Action
     }
 
 
-    public blockKey(): void
-    {
-
-    }
-
-
     public resetJumpState(): void 
     {
         this.isJumping      = false

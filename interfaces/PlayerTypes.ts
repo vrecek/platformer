@@ -18,8 +18,8 @@ export type PlayerStats = ActionStats & {
 }
 
 export type ActionStats = EntityStats & {
-    health:     number
-    def_health: number
+    health:       number
+    def_health:   number
 }
 
 export type PlayerEq = (Item | null)[]

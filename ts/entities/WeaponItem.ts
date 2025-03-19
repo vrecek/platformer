@@ -81,10 +81,11 @@ class WeaponItem extends Entity
     public getWeaponStats(): Weapon
     {
         return {
-            img:      this.src,
-            inf_ammo: this.inf_ammo,
-            type:     this.type,
-            stats:    {...this.stats}
+            img:          this.src,
+            inf_ammo:     this.inf_ammo,
+            is_reloading: false,
+            type:         this.type,
+            stats:        {...this.stats}
         }
     }
 }

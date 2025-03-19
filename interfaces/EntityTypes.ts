@@ -97,10 +97,11 @@ export type HealthObject = {
 }
 
 export type Weapon = {
-    type:     WeaponType
-    inf_ammo: boolean
-    stats:    WeaponCommon | ShotgunWeapon
-    img:      string
+    type:         WeaponType
+    is_reloading: boolean
+    inf_ammo:     boolean
+    stats:        WeaponCommon | ShotgunWeapon
+    img:          string
 }
 
 export type WeaponCommon = {

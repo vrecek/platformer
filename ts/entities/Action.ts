@@ -9,15 +9,15 @@ abstract class Action extends Entity
     private bullet_cd:    number
     private shots:        Bullet[]
 
-    private weapon:       Weapon | null
-    private weapon_def:   Weapon | null
-    private is_reloading: boolean
+    private weapon:       Maybe<Weapon>
+    private weapon_def:   Maybe<Weapon>
+    private reload_timer: number | undefined
 
     protected health:     number
     protected def_health: number
     protected last_dir:   ShootDirection
 
-    
+
     private getBulletImage(type: 'bullet' | 'rocket', width: number): [number, string, BulletDirection]
     {
         let x:   number          = this.x + this.w + 2, 
@@ -89,7 +89,6 @@ abstract class Action extends Entity
         this.shots      = []
         this.last_dir   = args?.act_defaults?.direction ?? 'right'
 
-        this.is_reloading = false
         this.health       = args?.act_defaults?.health ?? 100
         this.def_health   = this.health
         this.bullet_cd    = 2000
@@ -99,13 +98,11 @@ abstract class Action extends Entity
     }
 
 
-    public shoot(): void
+    public shoot(reloadCB?: () => void): void
     {
-        if (this.has_shot || !this.weapon || this.is_reloading || !this.weapon.stats.mag_ammo) 
+        if (this.has_shot || !this.weapon || this.weapon.is_reloading || !this.weapon.stats.mag_ammo) 
             return
 
-
-        const s: WeaponCommon = this.weapon.stats
 
         switch (this.weapon.type)
         {
@@ -125,22 +122,8 @@ abstract class Action extends Entity
             default: return
         }
 
-        if (! --this.weapon.stats.mag_ammo)
-        {
-            this.is_reloading = true
-
-            setTimeout(() => {
-                if (!this.weapon) return
-
-                this.is_reloading = false
-                // 30 mag, tot: 60
-                // 0 curr_mag, tot 20
-
-                const new_mag: number = 30
-                this.weapon.stats.mag_ammo = new_mag
-
-            }, this.weapon.stats.reload_time)
-        }
+        if (!this.weapon.inf_ammo && ! --this.weapon.stats.mag_ammo && this.weapon.stats.total_ammo)
+            this.reload(reloadCB)
 
         this.has_shot = true
         setTimeout(() => this.has_shot = false,  this.weapon.stats.shoot_cd)
@@ -183,6 +166,49 @@ abstract class Action extends Entity
     public getShots(): Bullet[]
     {
         return this.shots
+    }
+
+
+    public reload(reloadCB?: () => void): void
+    {
+        if (!this.weapon || this.weapon.stats.mag_ammo === this.weapon_def?.stats.mag_ammo || !this.weapon.stats.total_ammo) 
+            return
+
+        this.weapon.is_reloading = true
+
+        this.reload_timer = setTimeout(() => {
+            if (!this.weapon || !this.weapon.is_reloading) return
+
+            let missing: number = this.weapon_def!.stats.mag_ammo - this.weapon.stats.mag_ammo,
+                new_mag: number = this.weapon_def!.stats.mag_ammo
+
+            if (this.weapon.stats.total_ammo - missing < 0)
+            {
+                new_mag = this.weapon.stats.mag_ammo + this.weapon.stats.total_ammo
+                missing = this.weapon.stats.total_ammo
+            }
+            
+            this.weapon.stats.total_ammo -= missing
+            this.weapon.stats.mag_ammo    = new_mag
+            this.weapon.is_reloading      = false
+
+            reloadCB?.()
+
+        }, this.weapon.stats.reload_time)
+    }
+
+
+    public reloadIndicator(ctx: CanvasRenderingContext2D): void
+    {
+        ctx.font = "14px Verdana, Geneva, Tahoma, sans-serif"
+
+        const text: string      = 'RELOADING',
+              size: TextMetrics = ctx.measureText(text),
+              posx: number      = this.x + (this.w - size.width) / 2
+
+
+        ctx.fillStyle = "white"
+        ctx.fillText(text, posx, this.y - 10)
     }
 
 
@@ -234,21 +260,9 @@ abstract class Action extends Entity
     }
 
 
-    public getWeaponDefaults(): Weapon | null
+    public getWeaponDefaults(): Maybe<Weapon>
     {
-        if (!this.weapon_def) return null
-
-        return {
-            ...this.weapon_def,
-            stats: {
-                bullet_dmg:   this.weapon_def.stats.bullet_dmg,
-                bullet_speed: this.weapon_def.stats.bullet_speed,
-                shoot_cd:     this.weapon_def.stats.shoot_cd,
-                mag_ammo:     this.weapon_def.stats.mag_ammo,
-                total_ammo:   this.weapon_def.stats.total_ammo,
-                reload_time:  this.weapon_def.stats.reload_time
-            }
-        }
+        return this.weapon_def
     }
 
 
@@ -263,6 +277,9 @@ abstract class Action extends Entity
 
     public setWeapon(weapon: Weapon): void
     {
+        clearTimeout(this.reload_timer)
+
+        this.has_shot   = false
         this.weapon     = {...weapon, stats: {...weapon.stats}}
         this.weapon_def = {...weapon, stats: {...weapon.stats}}
     }
@@ -278,8 +295,8 @@ abstract class Action extends Entity
     {
         return {
             ...super.getStats(),
-            health:     this.health,
-            def_health: this.def_health
+            health:       this.health,
+            def_health:   this.def_health
         }
     }
 }

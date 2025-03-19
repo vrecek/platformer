@@ -22,7 +22,7 @@ const LEVELS: Level[] = [
                 // },
                 act_defaults: {
                     direction: 'left',
-                    // weapon: new WeaponItem(0, 0, 'rocketlauncher').getWeaponStats()
+                    //weapon: new WeaponItem(0, 0, 'rocketlauncher', true).getWeaponStats(),
                 }
             }),
         ],
