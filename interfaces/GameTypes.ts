@@ -1,8 +1,10 @@
+import Ammo from "../ts/entities/Ammo"
 import Enemy from "../ts/entities/Enemy"
 import Entity from "../ts/entities/Entity"
 import Item from "../ts/entities/Item"
 import Score from "../ts/entities/Score"
 import WeaponItem from "../ts/entities/WeaponItem"
+import Exit from "../ts/Exit"
 
 
 export type VoidFn = () => void
@@ -25,14 +27,16 @@ export type Level = {
         x: number
         y: number
     }
+    exit:      Exit[]
     enemies:   Enemy[]
     surfaces:  Entity[]
     scores:    Score[]
     weapons:   WeaponItem[]
+    ammo:      Ammo[]
     platforms: Entity[]
     items:     Item[]
 }
 
-export type EntityType = 'enemies' | 'surfaces' | 'scores' | 'platforms' | 'items' | 'weapons'
+export type EntityType = 'enemies' | 'surfaces' | 'scores' | 'platforms' | 'items' | 'weapons' | 'ammo' | 'exit'
 
 export type LevelLoader = 'next' | 'current'

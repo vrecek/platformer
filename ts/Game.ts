@@ -13,12 +13,15 @@ class Game
     private points:      number
     private totalPoints: number
 
+    private muted:       boolean
+
 
     public constructor(levels: Level[], w: number, h: number)
     {
         this.canvas = document.querySelector('canvas')!
         this.ctx    = this.canvas.getContext('2d')!
 
+        this.muted  = true
         this.levels = [...levels]
 
         this.level       = 1
@@ -92,6 +95,23 @@ class Game
     }
 
 
+    public audio(path: string): void
+    {
+        if (this.muted || !path)
+            return
+        
+        new Audio(path).play()
+    }
+
+
+    public toggleAudio(): boolean
+    {
+        this.muted = !this.muted
+        
+        return this.muted
+    }
+
+
     public update(fn: VoidFn): void
     {
         const refresh = () => {
@@ -128,7 +148,7 @@ class Game
     }
 
 
-    public hasLevelBeenFinished(): boolean
+    public havePointsBeenCollected(): boolean
     {
         return this.points === this.totalPoints
     }

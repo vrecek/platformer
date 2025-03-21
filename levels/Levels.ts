@@ -5,11 +5,17 @@ import Platform from '../ts/entities/Platform.js'
 import Score from '../ts/entities/Score.js'
 import Enemy from '../ts/entities/Enemy.js'
 import WeaponItem from '../ts/entities/WeaponItem.js'
+import Ammo from '../ts/entities/Ammo.js'
+import Exit from '../ts/Exit.js'
 
 
 const LEVELS: Level[] = [
     {
         player: { x: 0, y: 560 },
+        exit: [new Exit(700, 530)],
+        ammo: [
+            new Ammo(520, 570)
+        ],
         weapons: [
             new WeaponItem(450, 540, 'smg')
         ],
@@ -46,7 +52,7 @@ const LEVELS: Level[] = [
         scores: [
             new Score(250, 480),
             new Score(450, 480),
-            new Score(775, 575)
+            // new Score(775, 575)
         ],
         platforms: [
             new Platform(500, 595, 200, 'speed'),
@@ -124,6 +130,8 @@ const LEVELS: Level[] = [
     {
         player: { x: 20, y: 40 },
         weapons: [],
+        exit: [new Exit(700, 550)],
+        ammo: [],
         enemies: [
             new Enemy(0, 560, 800, 40),
             new Enemy(285, 25, 20, 40, {

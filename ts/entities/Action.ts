@@ -1,10 +1,12 @@
-import { Bullet, BulletDirection, EntityStats, HealthObject, Maybe, OptionalArgs, ShootDirection, ShotgunWeapon, Weapon, WeaponCommon, WeaponStat } from "../../interfaces/EntityTypes.js";
+import { Bullet, BulletDirection, EntityStats, HealthObject, Maybe, OptionalActionArgs, OptionalArgs, ShootDirection, ShotgunWeapon, Weapon, WeaponCommon, WeaponStat } from "../../interfaces/EntityTypes.js";
 import { ActionStats } from "../../interfaces/PlayerTypes.js";
+import Game from "../Game.js";
 import Entity from "./Entity.js";
 
 
 abstract class Action extends Entity
 {
+    private gameobj:      Maybe<Game>
     private has_shot:     boolean
     private bullet_cd:    number
     private shots:        Bullet[]
@@ -12,6 +14,8 @@ abstract class Action extends Entity
     private weapon:       Maybe<Weapon>
     private weapon_def:   Maybe<Weapon>
     private reload_timer: number | undefined
+
+    private godmode:      boolean
 
     protected health:     number
     protected def_health: number
@@ -81,18 +85,21 @@ abstract class Action extends Entity
     }
 
 
-    protected constructor(x: number, y: number, w: number, h: number, args?: Maybe<OptionalArgs>)
+    protected constructor(x: number, y: number, w: number, h: number, args?: Maybe<OptionalActionArgs>)
     {
         super(x, y, w, h, args)
+
+        this.gameobj    = args?.act_defaults?.game
 
         this.has_shot   = false
         this.shots      = []
         this.last_dir   = args?.act_defaults?.direction ?? 'right'
 
-        this.health       = args?.act_defaults?.health ?? 100
-        this.def_health   = this.health
-        this.bullet_cd    = 2000
+        this.health     = args?.act_defaults?.health ?? 100
+        this.def_health = this.health
+        this.godmode    = args?.godmode ?? false
 
+        this.bullet_cd  = 2000
         this.weapon     = args?.act_defaults?.weapon ? { ...args.act_defaults.weapon, stats: {...args.act_defaults.weapon.stats} } : null
         this.weapon_def = args?.act_defaults?.weapon ? { ...args.act_defaults.weapon, stats: {...args.act_defaults.weapon.stats} } : null
     }
@@ -125,7 +132,9 @@ abstract class Action extends Entity
         if (!this.weapon.inf_ammo && ! --this.weapon.stats.mag_ammo && this.weapon.stats.total_ammo)
             this.reload(reloadCB)
 
+        this.gameobj?.audio?.(this.weapon.wav)
         this.has_shot = true
+
         setTimeout(() => this.has_shot = false,  this.weapon.stats.shoot_cd)
     }
 
@@ -171,10 +180,14 @@ abstract class Action extends Entity
 
     public reload(reloadCB?: () => void): void
     {
-        if (!this.weapon || this.weapon.stats.mag_ammo === this.weapon_def?.stats.mag_ammo || !this.weapon.stats.total_ammo) 
+        if (
+            this.weapon?.is_reloading || !this.weapon || !this.weapon.stats.total_ammo ||
+            this.weapon.stats.mag_ammo === this.weapon_def?.stats.mag_ammo
+        ) 
             return
 
         this.weapon.is_reloading = true
+        this.gameobj?.audio?.('/data/weapons/sounds/reload.wav')
 
         this.reload_timer = setTimeout(() => {
             if (!this.weapon || !this.weapon.is_reloading) return
@@ -198,6 +211,14 @@ abstract class Action extends Entity
     }
 
 
+    public addAmmo(count: number): void
+    {
+        if (!this.weapon) return
+
+        this.weapon.stats.total_ammo = Math.min(this.weapon.stats.total_ammo + count, this.weapon.stats.max_ammo);
+    }
+
+
     public reloadIndicator(ctx: CanvasRenderingContext2D): void
     {
         ctx.font = "14px Verdana, Geneva, Tahoma, sans-serif"
@@ -214,9 +235,12 @@ abstract class Action extends Entity
 
     public deal_damage(target: Action, bullet?: Bullet): boolean
     {
+        if (target.godmode)
+            return false
+        
         if (bullet?.type === 'explosion' && bullet.explosionObj)
         {
-            const t_id: string = target.getStats().id
+            const t_id: string = target.id
 
             if (bullet.explosionObj.affected.includes(t_id))
                 return false
@@ -247,6 +271,8 @@ abstract class Action extends Entity
             if (this.shots[i].type === 'explosive')
             {
                 const obj: Entity = new Entity(stats.x + stats.w/2, stats.y, 20, 20, {image: '/data/explosion.svg'})
+
+                this.gameobj?.audio?.('/data/weapons/sounds/explosion.wav')
 
                 this.shots.push({obj, dir: 1, dirX: 0, dirY: 0, type: 'explosion', explosionObj: {
                     sizeStep: 8,
@@ -295,8 +321,9 @@ abstract class Action extends Entity
     {
         return {
             ...super.getStats(),
-            health:       this.health,
-            def_health:   this.def_health
+            health:     this.health,
+            def_health: this.def_health,
+            godmode:    this.godmode
         }
     }
 }

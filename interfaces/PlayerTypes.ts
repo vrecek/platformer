@@ -1,5 +1,5 @@
 import Item from "../ts/entities/Item"
-import { EntityStats } from "./EntityTypes"
+import { EntityStats, Maybe } from "./EntityTypes"
 
 export type MoveKeys = 'w' | 'a' | 's' | 'd'
 
@@ -18,8 +18,9 @@ export type PlayerStats = ActionStats & {
 }
 
 export type ActionStats = EntityStats & {
-    health:       number
-    def_health:   number
+    health:     number
+    def_health: number
+    godmode:    boolean
 }
 
 export type PlayerEq = (Item | null)[]

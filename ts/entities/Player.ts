@@ -4,6 +4,7 @@ import { CanvasStats, CollisionValues, KeysInput } from "../../interfaces/GameTy
 import { Bindings, PlayerEq, PlayerStats } from "../../interfaces/PlayerTypes.js"
 import Item from "./Item.js"
 import Action from "./Action.js"
+import Game from "../Game.js"
 
 
 

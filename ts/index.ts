@@ -11,6 +11,8 @@ import Action from "./entities/Action.js"
 import Enemy from "./entities/Enemy.js"
 import { ActivationObject } from "../interfaces/PlayerTypes.js"
 import WeaponItem from "./entities/WeaponItem.js"
+import Ammo from "./entities/Ammo.js"
+import Exit from "./Exit.js"
 
 
 // ---------------------- ELEMENTS -------------------------
@@ -38,10 +40,11 @@ const DEFAULT_SPEED:  number = 3,
 // -------------------- ENTITIES --------------------------
 
 const PLAYER: Player = new Player(210, 30, 40, 40, DEFAULT_SPEED, DEFAULT_JUMP, {
-    weapon: new WeaponItem(0, 0, 'rocketlauncher').getWeaponStats()
+    weapon: new WeaponItem(0, 0, 'rocketlauncher').getWeaponStats(),
     // weapon: new WeaponItem(0, 0, 'smg').getWeaponStats()
-    // weapon: new WeaponItem(0, 0, 'shotgun').getWeaponStats()
-    // weapon: new WeaponItem(0, 0, 'pistol').getWeaponStats()
+    // weapon: new WeaponItem(0, 0, 'shotgun').getWeaponStats(),
+    // weapon: new WeaponItem(0, 0, 'pistol').getWeaponStats(),
+    game: GAME
 })
 
 // ------------------------------------------------------
@@ -66,7 +69,7 @@ const init = () => {
     GAME.update(() => {
         if (g_currentLevel)
         {
-            const { enemies, scores, surfaces, platforms, items, weapons } = g_currentLevel
+            const { enemies, scores, surfaces, platforms, items, weapons, ammo, exit } = g_currentLevel
     
     
             if (!g_initPlayerPos)
@@ -75,10 +78,12 @@ const init = () => {
                 g_initPlayerPos = true
             }
     
+
+
             for (const ent of surfaces)
                 ent.draw(CTX, '#3a8cf3')
     
-            for (const ent of [...scores, ...platforms, ...items, ...weapons] as Entity[])
+            for (const ent of [...scores, ...platforms, ...items, ...weapons, ...ammo] as Entity[])
                 ent.draw(CTX)
     
             for (const shooter of [...enemies, PLAYER] as Action[])
@@ -123,6 +128,14 @@ const init = () => {
                     }
                 }
             }
+
+            if (GAME.havePointsBeenCollected()) 
+            {
+                for (const e of exit) e.draw(CTX)
+
+                PLAYER.checkCollision(exit, collidedWithExit)
+            }
+
     
             if (g_stopped) return
     
@@ -135,6 +148,7 @@ const init = () => {
             PLAYER.checkCollision(scores, collidedWithScore)
             PLAYER.checkCollision(weapons, collidedWithWeapon)
             PLAYER.checkCollision(items, collidedWithItem)
+            PLAYER.checkCollision(ammo, collidedWithAmmo)
     
             PLAYER.handleCanvasCollision(GAME.isCollided(PLAYER), GAME.getCanvasStats())
     
@@ -195,6 +209,13 @@ document.querySelector('section.lvl button')?.addEventListener('click', (e: Even
         proceedToNextLevel(l)
 })
 
+document.querySelector('img.sound-icon')?.addEventListener('click', (e: Event) => {
+    const t: HTMLImageElement = e.target as HTMLImageElement
+
+    t.src = GAME.toggleAudio() ? '/data/sound_off.svg' : '/data/sound_on.svg'
+})
+
+document.querySelector('.i-github')?.addEventListener('click', () => window.open('https://github.com/vrecek', '_blank'))
 
 
 const getActiveIndex = (): [Element[] | null, number] => {
@@ -289,11 +310,44 @@ const activeItemSelector = (backwards?: boolean): boolean => {
 
 // ------------------- COLLISION FNS -----------------------
 
+const collidedWithExit = (exit: Exit): void => {
+    removeEntity('exit', exit.getStats().id)
+
+    const nextLevel: Level | null = GAME.loadLevel('next')
+
+    if (nextLevel)
+    {
+        removeAllEffects()
+        proceedToNextLevel(nextLevel)
+    }
+    else 
+    {
+        PLAYER.changePlayerMovementStatus(false)
+        toggleEnemyAnimation(false) 
+        showFinishScreen()
+    }
+}
+
+
 const collidedWithWeapon = (weapon: WeaponItem): void => {
     removeEntity('weapons', weapon.getStats().id)
 
     PLAYER.setWeapon(weapon.getWeaponStats())
     displayWeapon()
+    displayAmmo()
+}
+
+
+const collidedWithAmmo = (ammo: Ammo): void => {
+    const pw: Maybe<WeaponCommon> = PLAYER.getWeapon()?.stats
+
+    if (!pw || pw.total_ammo === pw.max_ammo)
+        return
+
+    removeEntity('ammo', ammo.getStats().id)
+
+    PLAYER.addAmmo(ammo.getAmmoCount() || PLAYER.getWeaponDefaults()!.stats.mag_ammo)
+    
     displayAmmo()
 }
 
@@ -343,23 +397,6 @@ const collidedWithPlatform = (platform: Platform): void => {
 const collidedWithScore = (score: Score): void => {
     GAME.updateScoreText(1)
     removeEntity('scores', score.getStats().id)
-
-    if (GAME.hasLevelBeenFinished()) 
-    {
-        const nextLevel: Level | null = GAME.loadLevel('next')
-
-        if (nextLevel)
-        {
-            removeAllEffects()
-            proceedToNextLevel(nextLevel)
-        }
-        else 
-        {
-            PLAYER.changePlayerMovementStatus(false)
-            toggleEnemyAnimation(false) 
-            showFinishScreen()
-        }
-    }
 }
 
 

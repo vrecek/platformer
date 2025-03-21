@@ -1,4 +1,5 @@
 import Entity from "../ts/entities/Entity"
+import Game from "../ts/Game"
 
 
 export type OptionalArgs = {
@@ -12,7 +13,12 @@ export type OptionalArgs = {
 export type ShootDirection = 'left' | 'right'
 
 export type OptionalEnemyArgs = OptionalArgs & {
-    shoot?: boolean
+    shoot?:   boolean
+}
+
+export type OptionalActionArgs = OptionalArgs & {
+    godmode?: boolean
+    game?:    Maybe<Game>
 }
 
 export type EntityPos = {
@@ -22,6 +28,7 @@ export type EntityPos = {
 
 export type ActionDefaults = {
     weapon?:    Weapon
+    game?:      Game
     health?:    number
     direction?: ShootDirection
 }
@@ -102,6 +109,7 @@ export type Weapon = {
     inf_ammo:     boolean
     stats:        WeaponCommon | ShotgunWeapon
     img:          string
+    wav:          string
 }
 
 export type WeaponCommon = {
@@ -123,4 +131,4 @@ export type WeaponStats = PistolWeapon | ShotgunWeapon
 export type WeaponType = 'pistol' | 'shotgun' | 'smg' | 'rocketlauncher'
 
 export type WeaponStat = 'bullet_speed' | 'bullet_dmg' | 'shoot_cd' | 
-                         'mag_ammo' | 'total_ammo' | 'reload_time'
+                         'mag_ammo' | 'total_ammo' | 'reload_time' | 'max_ammo'
