@@ -17,11 +17,13 @@ import Exit from "./Exit.js"
 
 // ---------------------- ELEMENTS -------------------------
 
-const health_bar: HTMLElement      = document.querySelector('section.health div.bar div') as HTMLElement,
-      health_txt: Element          = document.querySelector('section.health p')!,
-      weapon_img: HTMLImageElement = document.querySelector('aside.eq section.weapon img') as HTMLImageElement,
-      ammo_curr:  HTMLElement      = document.querySelector('section.ammo span.curr') as HTMLElement,
-      ammo_total: HTMLElement      = document.querySelector('section.ammo span.total') as HTMLElement  
+const health_bar:     HTMLElement      = document.querySelector('section.health div.bar div') as HTMLElement,
+      health_txt:     Element          = document.querySelector('section.health p')!,
+      weapon_img:     HTMLImageElement = document.querySelector('aside.eq section.weapon img') as HTMLImageElement,
+      ammo_curr:      HTMLElement      = document.querySelector('.ammo .mag p.nr') as HTMLElement,
+      ammo_total:     HTMLElement      = document.querySelector('.ammo .total p.nr') as HTMLElement,
+      ammo_total_bar: HTMLElement      = document.querySelector('.ammo .total .bar div') as HTMLElement,
+      ammo_curr_bar:  HTMLElement      = document.querySelector('.ammo .mag .bar div') as HTMLElement
 
 // --------------------------------------------------------
 
@@ -40,8 +42,8 @@ const DEFAULT_SPEED:  number = 3,
 // -------------------- ENTITIES --------------------------
 
 const PLAYER: Player = new Player(210, 30, 40, 40, DEFAULT_SPEED, DEFAULT_JUMP, {
-    weapon: new WeaponItem(0, 0, 'rocketlauncher').getWeaponStats(),
-    // weapon: new WeaponItem(0, 0, 'smg').getWeaponStats()
+    // weapon: new WeaponItem(0, 0, 'rocketlauncher').getWeaponStats(),
+    weapon: new WeaponItem(0, 0, 'smg').getWeaponStats(),
     // weapon: new WeaponItem(0, 0, 'shotgun').getWeaponStats(),
     // weapon: new WeaponItem(0, 0, 'pistol').getWeaponStats(),
     game: GAME
@@ -258,11 +260,26 @@ const reloadDisplay = (): void => {
 
 
 const displayAmmo = (): void => {
-    const mag: string = `${PLAYER.getWeapon()?.stats.mag_ammo}` || '-',
-          tot: string = `${PLAYER.getWeapon()?.stats.total_ammo}` || '-'
+    const sw: Maybe<WeaponCommon> = PLAYER.getWeapon()?.stats,
+          sd: Maybe<WeaponCommon> = PLAYER.getWeaponDefaults()?.stats
 
-    ammo_curr.textContent  = `${mag}`
-    ammo_total.textContent = `${tot}`
+    const mag: string = `${sw?.mag_ammo   ?? '-'}`,
+          tot: string = `${sw?.total_ammo ?? '-'}`
+
+    let bc: number = 0,
+        bt: number = 0
+
+
+    if (sw && sd)
+    {
+        bc = calcBarPercent(sw.mag_ammo, sd.mag_ammo)
+        bt = calcBarPercent(sw.total_ammo, sd.total_ammo)
+    }
+
+    ammo_curr.textContent      = `${mag}`
+    ammo_total.textContent     = `${tot}`
+    ammo_curr_bar.style.width  = `${bc}%`
+    ammo_total_bar.style.width = `${bt}%`
 }
 
 
@@ -506,7 +523,7 @@ const updateHealth = (): void => {
     if (health <= 0 && PLAYER.isEffectActive('invincibility'))
         PLAYER.set_health(1)
 
-    let perc: number = (100 * health) / def_health
+    let perc: number = calcBarPercent(health, def_health)
 
     if (perc < 0) 
         perc = 0
@@ -567,6 +584,9 @@ const removeAllEffects = (): void => {
     for (const x of PLAYER.getActiveEffects())
         Item.zeroEffectContainer(PLAYER, x)
 }
+
+
+const calcBarPercent = (curr: number, total: number): number => (100 * curr) / total
 
 
 init()

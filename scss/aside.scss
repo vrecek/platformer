@@ -16,7 +16,7 @@ aside {
         justify-content: space-between;
 
         section.items div,
-        section.weapon div {
+        section.weapon div.weapon-img {
             width: 29%;
             aspect-ratio: 1;
             background: rgb(58, 58, 92);
@@ -38,12 +38,30 @@ aside {
             display: flex;
             align-items: center;
 
-            section {
+            section.wrap {
                 margin-left: .5em;
+                flex-grow: 1;
 
-                span {
-                    font-weight: 800;
-                    font-size: 2.75rem;
+                section {
+                    margin-bottom: .5em;
+
+                    div.txt {
+                        display: flex;
+                        justify-content: space-between;
+
+                        p {
+                            font-weight: 600;
+                            font-size: .9rem;
+                            letter-spacing: -1px;
+                        }
+                    }
+
+                    div.bar {
+                        div { 
+                            background: rgb(147, 147, 147);
+                            height: 15px; 
+                        }
+                    }
                 }
             }
         }
@@ -51,20 +69,12 @@ aside {
         section.health {
             p {
                 font-weight: bold;
-                font-size: 1.75rem;
+                font-size: 1.35rem;
             }
 
-            div.bar {
-                border-radius: .25em;
-                background: #3A3A5B;
-                border: 2px solid #454F6B;
+            div.bar { 
+                background: rgb(48, 148, 48);
                 height: 25px;
-
-                div {
-                    height: 100%;
-                    background: rgb(48, 148, 48);
-                    width: 100%;
-                }
             }
         }
 
@@ -121,6 +131,17 @@ aside {
                 img { width: 60%; }
                 
                 &.active { border-color: rgb(114, 150, 255); }
+            }
+        }
+
+        div.bar {
+            border-radius: .25em;
+            background: #3A3A5B;
+            border: 2px solid #454F6B;
+
+            div {
+                height: 100%;
+                width: 0%;
             }
         }
     }
