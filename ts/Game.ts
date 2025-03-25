@@ -1,4 +1,4 @@
-import { CanvasStats, CollisionValues, Level, LevelLoader, VoidFn } from "../interfaces/GameTypes"
+import { AudioObject, CanvasStats, CollisionValues, Level, LevelLoader, VoidFn } from "../interfaces/GameTypes"
 import Entity from "./entities/Entity"
 
 
@@ -14,17 +14,20 @@ class Game
     private totalPoints: number
 
     private muted:       boolean
+    private audios:      AudioObject[]
 
 
-    public constructor(levels: Level[], w: number, h: number)
+    public constructor(w: number, h: number, levels?: Level[])
     {
         this.canvas = document.querySelector('canvas')!
         this.ctx    = this.canvas.getContext('2d')!
 
         this.muted  = true
-        this.levels = [...levels]
+        this.audios = []
 
-        this.level       = 1
+        this.levels = [...(levels ?? [])]
+
+        this.level       = levels ? 1 : 0
         this.points      = 0
         this.totalPoints = 0
 
@@ -97,18 +100,58 @@ class Game
 
     public audio(path: string): void
     {
-        if (this.muted || !path)
-            return
+        if (!path) return
         
-        new Audio(path).play()
+        const a: HTMLAudioElement = new Audio(path),
+              id: string          = Math.random().toString().slice(2)
+        
+        this.audios.push({ audio: a, id })
+
+        a.onended = (): void => {
+            const i: number = this.audios.findIndex(x => x.id === id)
+
+            if (i !== -1)
+                this.audios.splice(i, 1)
+        }
+
+        if (this.muted)
+            a.volume = 0
+
+        a.play()
     }
 
 
     public toggleAudio(): boolean
     {
         this.muted = !this.muted
+
+        const vol: number = this.muted ? 0 : 1
+
+        for (const x of this.audios)
+            x.audio.volume = vol
         
         return this.muted
+    }
+
+
+    public unlockLevel(lvl: number): void
+    {
+        let lvls: number[] = JSON.parse(localStorage.getItem('unlocked_lvl') ?? 'null')
+
+        if (!lvls)
+        {
+            lvls    = [...new Array(this.levels.length).fill(0)]
+            lvls[0] = 1
+        }
+
+        lvl--
+
+        if (lvl >= lvls.length || lvls[lvl])
+            return
+
+        lvls[lvl] = 1
+
+        localStorage.setItem('unlocked_lvl', JSON.stringify(lvls))
     }
 
 
@@ -139,15 +182,6 @@ class Game
     }
 
 
-    public updateLevelStats(level: number, totalPoints: number)
-    {
-        this.level       = level
-        this.totalPoints = totalPoints
-
-        this.updateScoreText()
-    }
-
-
     public havePointsBeenCollected(): boolean
     {
         return this.points === this.totalPoints
@@ -168,11 +202,10 @@ class Game
         else
         {
             const isCurrent: boolean = type === 'current'
-
+            
             newLevel = this.levels[ this.level - (isCurrent ? 1 : 0) ]
             levelNr  = this.level + (isCurrent ? 0 : 1)
         }
-
 
         if (newLevel && levelNr)
         {
@@ -182,6 +215,13 @@ class Game
         }
 
         return newLevel ? Object.assign(Object.create(Object.getPrototypeOf(newLevel)), newLevel) : null
+    }
+
+
+    public setLevels(levels: Level[]): void
+    {
+        this.levels = levels
+        this.level  = 1
     }
 
 

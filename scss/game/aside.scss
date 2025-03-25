@@ -56,11 +56,9 @@ aside {
                         }
                     }
 
-                    div.bar {
-                        div { 
-                            background: rgb(147, 147, 147);
-                            height: 15px; 
-                        }
+                    div.bar div {
+                        background: rgb(147, 147, 147);
+                        height: 15px; 
                     }
                 }
             }
@@ -72,9 +70,9 @@ aside {
                 font-size: 1.35rem;
             }
 
-            div.bar { 
-                background: rgb(48, 148, 48);
+            div.bar div { 
                 height: 25px;
+                background: rgb(48, 148, 48);
             }
         }
 

@@ -1,0 +1,31 @@
+body {
+    main {
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+
+        section.menu {
+            width: 20%;
+
+            button, a {
+                margin-bottom: .5em;
+                padding: 1.25em;
+            }
+        }
+
+        h1 {
+            font-size: 4rem;
+            letter-spacing: 2px;
+            font-weight: 800;
+            margin-bottom: 1em;
+        }
+    }
+
+    button,
+    a.btn {
+        padding: .75em;
+        width: 100%;
+    }
+}

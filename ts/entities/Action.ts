@@ -13,6 +13,8 @@ abstract class Action extends Entity
 
     private weapon:       Maybe<Weapon>
     private weapon_def:   Maybe<Weapon>
+    private weapon_saved: Maybe<Weapon>
+
     private reload_timer: number | undefined
 
     private godmode:      boolean
@@ -84,6 +86,11 @@ abstract class Action extends Entity
         setTimeout(() => this.removeBullet(obj), this.bullet_cd)
     }
 
+    private weapon_copy(weapon: Maybe<Weapon>): Maybe<Weapon>
+    {
+        return weapon ? { ...weapon, stats: {...weapon.stats} } : null
+    }
+
 
     protected constructor(x: number, y: number, w: number, h: number, args?: Maybe<OptionalActionArgs>)
     {
@@ -99,9 +106,10 @@ abstract class Action extends Entity
         this.def_health = this.health
         this.godmode    = args?.godmode ?? false
 
-        this.bullet_cd  = 2000
-        this.weapon     = args?.act_defaults?.weapon ? { ...args.act_defaults.weapon, stats: {...args.act_defaults.weapon.stats} } : null
-        this.weapon_def = args?.act_defaults?.weapon ? { ...args.act_defaults.weapon, stats: {...args.act_defaults.weapon.stats} } : null
+        this.bullet_cd    = 2000
+        this.weapon       = this.weapon_copy(args?.act_defaults?.weapon)
+        this.weapon_def   = this.weapon_copy(args?.act_defaults?.weapon)
+        this.weapon_saved = this.weapon_copy(args?.act_defaults?.weapon)
     }
 
 
@@ -135,7 +143,7 @@ abstract class Action extends Entity
         this.gameobj?.audio?.(this.weapon.wav)
         this.has_shot = true
 
-        setTimeout(() => this.has_shot = false,  this.weapon.stats.shoot_cd)
+        setTimeout(() => this.has_shot = false, this.weapon.stats.shoot_cd)
     }
 
 
@@ -289,6 +297,20 @@ abstract class Action extends Entity
     public getWeaponDefaults(): Maybe<Weapon>
     {
         return this.weapon_def
+    }
+
+
+    public loadWeapon(): void
+    {
+        if (this.weapon_saved)
+            this.weapon = this.weapon_copy(this.weapon_saved)
+    }
+
+
+    public saveWeapon(): void
+    {
+        if (this.weapon)
+            this.weapon_saved = this.weapon_copy(this.weapon)
     }
 
 

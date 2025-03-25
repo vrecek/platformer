@@ -27,6 +27,7 @@ export type Level = {
         x: number
         y: number
     }
+    image:     string
     exit:      Exit[]
     enemies:   Enemy[]
     surfaces:  Entity[]
@@ -40,3 +41,8 @@ export type Level = {
 export type EntityType = 'enemies' | 'surfaces' | 'scores' | 'platforms' | 'items' | 'weapons' | 'ammo' | 'exit'
 
 export type LevelLoader = 'next' | 'current'
+
+export type AudioObject = {
+    audio: HTMLAudioElement
+    id:    string
+}

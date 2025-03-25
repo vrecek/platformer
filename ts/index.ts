@@ -4,15 +4,15 @@ import Item from "../ts/entities/Item.js"
 import Platform from "../ts/entities/Platform.js"
 import Player from "../ts/entities/Player.js"
 import Score from "../ts/entities/Score.js"
-import { Bullet, Maybe, Platforms, Weapon, WeaponCommon } from "../interfaces/EntityTypes.js"
+import { Bullet, Maybe, Platforms, WeaponCommon } from "../interfaces/EntityTypes.js"
 import { EntityType, Level } from "../interfaces/GameTypes.js"
-import LEVELS from "../levels/Levels.js"
 import Action from "./entities/Action.js"
 import Enemy from "./entities/Enemy.js"
 import { ActivationObject } from "../interfaces/PlayerTypes.js"
 import WeaponItem from "./entities/WeaponItem.js"
 import Ammo from "./entities/Ammo.js"
 import Exit from "./Exit.js"
+import getLevels from "../levels/Levels.js"
 
 
 // ---------------------- ELEMENTS -------------------------
@@ -29,12 +29,12 @@ const health_bar:     HTMLElement      = document.querySelector('section.health 
 
 // ---------------------- CONSTS --------------------------
 
-const GAME: Game = new Game(LEVELS, 800, 600),
+const GAME: Game = new Game(800, 600),
       CTX:  CanvasRenderingContext2D = GAME.getCtx()
 
-const DEFAULT_SPEED:  number = 3,
-      DEFAULT_JUMP:   number = 5,
-      EQ_COOLDOWN:    number = 200
+const DEFAULT_SPEED: number = 3,
+      DEFAULT_JUMP:  number = 5,
+      EQ_COOLDOWN:   number = 200
 
 // --------------------------------------------------------
 
@@ -42,8 +42,8 @@ const DEFAULT_SPEED:  number = 3,
 // -------------------- ENTITIES --------------------------
 
 const PLAYER: Player = new Player(210, 30, 40, 40, DEFAULT_SPEED, DEFAULT_JUMP, {
-    // weapon: new WeaponItem(0, 0, 'rocketlauncher').getWeaponStats(),
-    weapon: new WeaponItem(0, 0, 'smg').getWeaponStats(),
+    weapon: new WeaponItem(0, 0, 'rocketlauncher').getWeaponStats(),
+    // weapon: new WeaponItem(0, 0, 'smg').getWeaponStats(),
     // weapon: new WeaponItem(0, 0, 'shotgun').getWeaponStats(),
     // weapon: new WeaponItem(0, 0, 'pistol').getWeaponStats(),
     game: GAME
@@ -51,14 +51,13 @@ const PLAYER: Player = new Player(210, 30, 40, 40, DEFAULT_SPEED, DEFAULT_JUMP, 
 
 // ------------------------------------------------------
 
-
 // ------------------- VARIABLES --------------------------
 
 let g_initPlayerPos: boolean      = false,
     g_item_toggle:   boolean      = true,
     g_stopped:       boolean      = false,
     g_healthbefore:  number       = 0,
-    g_currentLevel:  Maybe<Level> = GAME.loadLevel('current'),
+    g_currentLevel:  Maybe<Level> = null,
     g_collidedE:     Maybe        = null
 
 // --------------------------------------------------------
@@ -67,6 +66,7 @@ const init = () => {
     if (GAME.insufficientScreenHandler())
         return
     
+    initLevels()
     
     GAME.update(() => {
         if (g_currentLevel)
@@ -145,12 +145,12 @@ const init = () => {
             PLAYER.resetBlockedKeys()
     
             PLAYER.checkCollision(platforms, collidedWithPlatform, unCollidedWithPlatform)
-            PLAYER.checkCollision(enemies, collidedWithEnemy, unCollidedWithEnemy)
-            PLAYER.checkCollision(surfaces, collidedWithSurface)
-            PLAYER.checkCollision(scores, collidedWithScore)
-            PLAYER.checkCollision(weapons, collidedWithWeapon)
-            PLAYER.checkCollision(items, collidedWithItem)
-            PLAYER.checkCollision(ammo, collidedWithAmmo)
+            PLAYER.checkCollision(enemies,   collidedWithEnemy,    unCollidedWithEnemy)
+            PLAYER.checkCollision(surfaces,  collidedWithSurface)
+            PLAYER.checkCollision(scores,    collidedWithScore)
+            PLAYER.checkCollision(weapons,   collidedWithWeapon)
+            PLAYER.checkCollision(items,     collidedWithItem)
+            PLAYER.checkCollision(ammo,      collidedWithAmmo)
     
             PLAYER.handleCanvasCollision(GAME.isCollided(PLAYER), GAME.getCanvasStats())
     
@@ -164,7 +164,7 @@ const init = () => {
         }
     })
     
-    GAME.updateLevelStats(1, g_currentLevel?.scores.length ?? 0)
+    GAME.updateScoreText()
         
     PLAYER.initPressKeyEvents()
     PLAYER.addBinding('item_scroll-backwards', ['q'], () => activeItemSelector(true))
@@ -198,18 +198,11 @@ PLAYER.addBinding('item_use', ['f'], () => {
     }
 })
 
+/*
+    
+*/
+
 // --------------- Funcs ------------------
-
-document.querySelector('section.lvl button')?.addEventListener('click', (e: Event) => {
-    const i = document.querySelector('input.lvlinput') as HTMLInputElement
-
-    if (typeof +i.value === undefined) return
-
-    const l = GAME.loadLevel(+i.value)
-
-    if (l)
-        proceedToNextLevel(l)
-})
 
 document.querySelector('img.sound-icon')?.addEventListener('click', (e: Event) => {
     const t: HTMLImageElement = e.target as HTMLImageElement
@@ -438,7 +431,6 @@ const collidedWithEnemy = (enemy: Entity): void => {
 }
 
 
-
 const unCollidedWithEnemy = (): void => {
     g_collidedE = null
     PLAYER.setImage("/data/player/player.svg")
@@ -497,11 +489,14 @@ const showLoseScreen = (): void => {
         PLAYER.changePlayerMovementStatus(true)
         PLAYER.setImage("/data/player/player.svg")
         PLAYER.loadEquipment()
+        PLAYER.loadWeapon()
         PLAYER.set_health(PLAYER.getStats().def_health)
 
         s.remove()
         displayItems()
-        toggleEnemyAnimation(true)
+        displayWeapon()
+        displayAmmo()
+        toggleEnemyAnimation(true);
         proceedToNextLevel(GAME.loadLevel('current')!)
         
         g_stopped = false
@@ -529,7 +524,7 @@ const updateHealth = (): void => {
         perc = 0
 
     g_healthbefore = health
-    
+
     health_bar.style.width = `${perc}%`
     health_txt.textContent = `${perc}`
 }
@@ -540,11 +535,13 @@ const proceedToNextLevel = (nextLevel: Level): void => {
 
     PLAYER.setPlayerSpeed(DEFAULT_SPEED)
     PLAYER.saveEquipment()
+    PLAYER.saveWeapon()
     PLAYER.resetJumpState()
     
     g_initPlayerPos = false
     g_currentLevel  = nextLevel
 
+    GAME.unlockLevel(GAME.getCurrentLevel())
     GAME.updateScoreText()
 }
 
@@ -587,6 +584,16 @@ const removeAllEffects = (): void => {
 
 
 const calcBarPercent = (curr: number, total: number): number => (100 * curr) / total
+
+
+const initLevels = (): void => {
+    const lvl: Maybe<number> = +localStorage.getItem('init_lvl')!
+    
+    GAME.setLevels(getLevels(GAME))
+    g_currentLevel = GAME.loadLevel(lvl+1)
+
+    localStorage.removeItem('init_lvl')
+}
 
 
 init()

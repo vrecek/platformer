@@ -13,7 +13,7 @@ export type OptionalArgs = {
 export type ShootDirection = 'left' | 'right'
 
 export type OptionalEnemyArgs = OptionalArgs & {
-    shoot?:   boolean
+    shoot?: boolean
 }
 
 export type OptionalActionArgs = OptionalArgs & {
