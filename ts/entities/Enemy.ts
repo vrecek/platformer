@@ -4,7 +4,7 @@ import Action from "./Action.js";
 
 class Enemy extends Action
 {
-    private shooter:   Maybe<boolean>
+    private shooter:   boolean
     private can_shoot: boolean
 
 
@@ -13,7 +13,7 @@ class Enemy extends Action
         super(x, y, w, h, {...args, color: '#e73737'})
 
         this.can_shoot = true
-        this.shooter   = args?.shoot
+        this.shooter   = args?.shoot ?? false
     }
 
 
@@ -21,6 +21,12 @@ class Enemy extends Action
     {
         if (this.shooter && this.can_shoot)
             super.shoot()
+    }
+
+
+    public isShooter(): boolean
+    {
+        return this.shooter
     }
 
 

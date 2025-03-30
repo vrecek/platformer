@@ -1,5 +1,5 @@
 import Entity from "./Entity.js"
-import { ActionDefaults, Effects, EntityStats, Maybe } from "../../interfaces/EntityTypes.js"
+import { ActionDefaults, Bullet, Effects, EntityStats, FlameWeapon, Maybe } from "../../interfaces/EntityTypes.js"
 import { CanvasStats, CollisionValues, KeysInput } from "../../interfaces/GameTypes.js"
 import { Bindings, PlayerEq, PlayerStats } from "../../interfaces/PlayerTypes.js"
 import Item from "./Item.js"
@@ -414,6 +414,64 @@ class Player extends Action
     {
         this.activeEffects.push(...effects)
         item && this.activeItems.push(item)
+    }
+
+
+    public override drawShot(CTX: CanvasRenderingContext2D, b: Bullet)
+    {
+        const {x, y, w, h} = b.obj.getStats()
+
+        if (b.explosionObj)
+        {
+            const {sizeStep, timeout} = b.explosionObj
+
+            b.obj.setSize(w + sizeStep, h + sizeStep)
+            b.obj.setPosition(x - sizeStep/2, y - sizeStep/2)
+
+            if (!timeout)
+                b.explosionObj.timeout = setTimeout(() => this.removeBullet(b.obj, true), 200)
+        }
+        else if (b.type === 'flamestream')
+        {
+            const gun:   FlameWeapon = this.weapon!.stats as FlameWeapon,
+                  new_w: number      = w - gun.flamestep
+
+            let leftshrink: number = 0                  
+
+            if (!this.checkBinding('player_shoot') || !this.weapon?.stats.mag_ammo)
+            {
+                leftshrink = gun.flamestep
+
+                b.obj.setSize(new_w)
+
+                if (new_w <= gun.flamestep)
+                {
+                    this.removeBullet(b.obj)
+                    this.gameobj?.stop_audio('/data/weapons/sounds/fire.wav')
+                }
+            }
+
+            if (b.dir === -1)
+                b.obj.setPosition(this.x - new_w - gun.flamestep - 2 + leftshrink , this.y)
+            else
+                b.obj.setPosition(this.x + this.w + 2, this.y)
+        }
+        else
+        {
+            // b.ang!+=.05
+            // const xr = this.x + this.w / 2
+            // const xy = this.y + this.h / 2
+
+            // const x1 = xr + b.rad! * Math.cos(b.ang!) - 20/2; // X position based on the angle
+            // const y1 = xy + b.rad! * Math.sin(b.ang!) - 10/2;
+            // b.obj.setPosition(x1,y1)
+            b.obj.setPosition(
+                x + (b.dir * b.dirX) * this.weapon!.stats.bullet_speed, 
+                y + b.dirY * this.weapon!.stats.bullet_speed
+            )
+        }
+
+        b.obj.draw(CTX)
     }
 
 

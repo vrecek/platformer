@@ -79,13 +79,13 @@ export type Pos = {
 }
 
 export type Bullet = {
-    obj:       Entity
-    type:      BulletType
-    dir:       BulletDirection
-    dirX:      number
-    dirY:      number
-    //rad?:number,ang?:number
+    obj:           Entity
+    type:          BulletType
+    dir:           BulletDirection
+    dirX:          number
+    dirY:          number
     explosionObj?: ExplosionBulletObject
+    flameObj?:     FlameBulletObject
 }
 
 export type ExplosionBulletObject = {
@@ -94,7 +94,12 @@ export type ExplosionBulletObject = {
     timeout?: number
 }
 
-export type BulletType = 'regular' | 'explosive' | 'explosion'
+export type FlameBulletObject = {
+    affected:     string[]
+    dmg_cooldown: number
+}
+
+export type BulletType = 'regular' | 'explosive' | 'explosion' | 'flamestream'
 
 export type BulletDirection = 1 | -1
 
@@ -126,9 +131,19 @@ export type ShotgunWeapon = WeaponCommon & {
     bullet_nr:   number
 }
 
-export type WeaponStats = PistolWeapon | ShotgunWeapon
+export type FlameWeapon = WeaponCommon & {
+    maxflame:  number
+    flamestep: number
+}
 
-export type WeaponType = 'pistol' | 'shotgun' | 'smg' | 'rocketlauncher'
+export type WeaponStats = PistolWeapon | ShotgunWeapon | FlameWeapon
+
+export type WeaponType = 'pistol' | 'shotgun' | 'smg' | 'rocketlauncher' | 'flamethrower'
 
 export type WeaponStat = 'bullet_speed' | 'bullet_dmg' | 'shoot_cd' | 
                          'mag_ammo' | 'total_ammo' | 'reload_time' | 'max_ammo'
+
+export type DamageObject = {
+    killed:   boolean
+    dmgdealt: number
+}

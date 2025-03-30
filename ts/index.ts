@@ -4,7 +4,7 @@ import Item from "../ts/entities/Item.js"
 import Platform from "../ts/entities/Platform.js"
 import Player from "../ts/entities/Player.js"
 import Score from "../ts/entities/Score.js"
-import { Bullet, Maybe, Platforms, WeaponCommon } from "../interfaces/EntityTypes.js"
+import { Bullet, DamageObject, Maybe, Platforms, WeaponCommon } from "../interfaces/EntityTypes.js"
 import { EntityType, Level } from "../interfaces/GameTypes.js"
 import Action from "./entities/Action.js"
 import Enemy from "./entities/Enemy.js"
@@ -42,8 +42,9 @@ const DEFAULT_SPEED: number = 3,
 // -------------------- ENTITIES --------------------------
 
 const PLAYER: Player = new Player(210, 30, 40, 40, DEFAULT_SPEED, DEFAULT_JUMP, {
-    weapon: new WeaponItem(0, 0, 'rocketlauncher').getWeaponStats(),
+    // weapon: new WeaponItem(0, 0, 'rocketlauncher').getWeaponStats(),
     // weapon: new WeaponItem(0, 0, 'smg').getWeaponStats(),
+    weapon: new WeaponItem(0, 0, 'flamethrower').getWeaponStats(),
     // weapon: new WeaponItem(0, 0, 'shotgun').getWeaponStats(),
     // weapon: new WeaponItem(0, 0, 'pistol').getWeaponStats(),
     game: GAME
@@ -81,7 +82,6 @@ const init = () => {
             }
     
 
-
             for (const ent of surfaces)
                 ent.draw(CTX, '#3a8cf3')
     
@@ -91,10 +91,12 @@ const init = () => {
             for (const shooter of [...enemies, PLAYER] as Action[])
             {
                 shooter.draw(CTX)
-    
-                // Enemy shoot
-                if (shooter instanceof Enemy)
+
+                if (shooter instanceof Enemy && shooter.isShooter())
+                {
+                    shooter.displayHealth(CTX)
                     shooter.shoot()
+                }
     
                 // Each bullet
                 for (const bullet of shooter.getShots() as Bullet[])
@@ -102,29 +104,38 @@ const init = () => {
                     shooter.drawShot(CTX, bullet)
     
                     // Bullet collided with a surface
-                    bullet.obj.checkCollision(surfaces, () => shooter.removeBullet(bullet.obj))
+                    bullet.obj.checkCollision(surfaces, () => bulletCollision(shooter, bullet))
     
                     // Bullet collided with a canvas
                     if (GAME.isCollided(bullet.obj).length)
-                        shooter.removeBullet(bullet.obj)
+                        bulletCollision(shooter, bullet)
     
                     if (shooter instanceof Enemy)
                     {
                         // Enemy bullet
                         bullet.obj.checkCollision<Player>([PLAYER], (player: Player) => {
+                            const dmg: DamageObject = shooter.deal_damage(player, bullet)
+
                             shooter.removeBullet(bullet.obj)
-                            shooter.deal_damage(player, bullet)
+                            
+                            if (dmg.dmgdealt)
+                                player.displayDamage(CTX, dmg.dmgdealt)
                         })
                     }
     
                     else if (shooter instanceof Player)
                     {
                         // Player bullet
-                        bullet.obj.checkCollision<Action>([...enemies, PLAYER], (enemy: Action) => {
-                            shooter.removeBullet(bullet.obj)
-    
-                            // Remove an enemy
-                            if (shooter.deal_damage(enemy, bullet))
+                        bullet.obj.checkCollision<Action>([...enemies.filter(x => x.isShooter()), PLAYER], (enemy: Action) => {
+                            const dmg: DamageObject = shooter.deal_damage(enemy, bullet)
+
+                            if (bullet.type !== 'flamestream')
+                                shooter.removeBullet(bullet.obj)
+
+                            if (dmg.dmgdealt)
+                                enemy.displayDamage(CTX, dmg.dmgdealt)
+
+                            if (dmg.killed)
                                 removeEntity('enemies', enemy.getStats().id)
                         })
                     }
@@ -155,12 +166,13 @@ const init = () => {
             PLAYER.handleCanvasCollision(GAME.isCollided(PLAYER), GAME.getCanvasStats())
     
             updateHealth()
-            reloadDisplay()
     
             if (PLAYER.getStats().health <= 0)
                 player_dead_handler()
     
             PLAYER.handleAdvancedMoveKeys()
+
+            Game.triggerStaticFunctions()
         }
     })
     
@@ -172,35 +184,31 @@ const init = () => {
     PLAYER.addBinding('item_drop',             ['z'], () => itemDrop())
     PLAYER.addBinding('player_shoot',          ['x'], () => playerShoot())
     PLAYER.addBinding('reload_weapon',         ['r'], () => PLAYER.reload(displayAmmo))
+
+    PLAYER.addBinding('item_use', ['f'], () => {
+        const [eq, i] = getActiveIndex()
+    
+        if (eq && i !== -1 && PLAYER.items[i])
+        {
+            const obj: ActivationObject = {
+                init_jump:   DEFAULT_JUMP,
+                init_speed:  DEFAULT_SPEED
+            }
+    
+            if ( !PLAYER.items[i]?.activate(PLAYER, obj) )
+                return
+    
+            PLAYER.clearItem(i)
+    
+            activeItemToggler(i, eq)
+            displayItems()
+        }
+    })
     
     displayWeapon()
     displayAmmo()
 }
 
-
-PLAYER.addBinding('item_use', ['f'], () => {
-    const [eq, i] = getActiveIndex()
-
-    if (eq && i !== -1 && PLAYER.items[i])
-    {
-        const obj: ActivationObject = {
-            init_jump:   DEFAULT_JUMP,
-            init_speed:  DEFAULT_SPEED
-        }
-
-        if ( !PLAYER.items[i]?.activate(PLAYER, obj) )
-            return
-
-        PLAYER.clearItem(i)
-
-        activeItemToggler(i, eq)
-        displayItems()
-    }
-})
-
-/*
-    
-*/
 
 // --------------- Funcs ------------------
 
@@ -246,12 +254,6 @@ const displayWeapon = (): void => {
 }
 
 
-const reloadDisplay = (): void => {
-    if (PLAYER.getWeapon()?.is_reloading)
-        PLAYER.reloadIndicator(CTX)
-}
-
-
 const displayAmmo = (): void => {
     const sw: Maybe<WeaponCommon> = PLAYER.getWeapon()?.stats,
           sd: Maybe<WeaponCommon> = PLAYER.getWeaponDefaults()?.stats
@@ -266,7 +268,7 @@ const displayAmmo = (): void => {
     if (sw && sd)
     {
         bc = calcBarPercent(sw.mag_ammo, sd.mag_ammo)
-        bt = calcBarPercent(sw.total_ammo, sd.total_ammo)
+        bt = calcBarPercent(sw.total_ammo, sd.max_ammo)
     }
 
     ammo_curr.textContent      = `${mag}`
@@ -319,6 +321,14 @@ const activeItemSelector = (backwards?: boolean): boolean => {
 }
 
 // ------------------- COLLISION FNS -----------------------
+
+const bulletCollision = (shooter: Action, bullet: Bullet): void => {
+    if (bullet.type === 'flamestream')
+        return
+
+    shooter.removeBullet(bullet.obj)
+}
+
 
 const collidedWithExit = (exit: Exit): void => {
     removeEntity('exit', exit.getStats().id)

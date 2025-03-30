@@ -20,7 +20,7 @@ const getLevels = (game?: Game): Level[] => {
                 new Ammo(520, 570)
             ],
             weapons: [
-                new WeaponItem(450, 540, 'smg')
+                new WeaponItem(450, 540, 'flamethrower')
             ],
             enemies: [
                 new Enemy(650, 560, 40, 40, {
@@ -32,7 +32,7 @@ const getLevels = (game?: Game): Level[] => {
                     act_defaults: {
                         direction: 'left',
                         game,
-                        //weapon: new WeaponItem(0, 0, 'shotgun', true).getWeaponStats(),
+                        // weapon: new WeaponItem(0, 0, 'pistol', true).getWeaponStats(),
                     }
                 }),
             ],

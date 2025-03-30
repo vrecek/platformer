@@ -48,7 +48,19 @@ class WeaponItem extends Entity
                 wav   = '/data/weapons/sounds/rocketlauncher.wav'
                 stats = { 
                     bullet_dmg: 15, shoot_cd: 2000, bullet_speed: 6, max_ammo: 3,
-                    mag_ammo: 1, total_ammo: 3, reload_time: 2000 
+                    mag_ammo: 1, total_ammo: 3, reload_time: 2000
+                }
+
+                super(x, y, 60, 60, {image})
+                break
+
+            case 'flamethrower':
+                image = '/data/weapons/flamethrower.svg'
+                wav   = '/data/weapons/sounds/fire.wav'
+                stats = { 
+                    bullet_dmg: 5, shoot_cd: 0, bullet_speed: 4, max_ammo: 400,
+                    mag_ammo: 200, total_ammo: 0, reload_time: 2500,
+                    maxflame: 300, flamestep: 20
                 }
 
                 super(x, y, 60, 60, {image})

@@ -1,9 +1,11 @@
-import { AudioObject, CanvasStats, CollisionValues, Level, LevelLoader, VoidFn } from "../interfaces/GameTypes"
+import { AudioObject, CanvasStats, CollisionValues, GameFunctions, Level, LevelLoader, VoidFn } from "../interfaces/GameTypes"
 import Entity from "./entities/Entity"
 
 
 class Game
 {
+    private static fns:  GameFunctions[] = []
+
     private canvas:      HTMLCanvasElement
     private ctx:         CanvasRenderingContext2D
 
@@ -25,6 +27,8 @@ class Game
         this.muted  = true
         this.audios = []
 
+        // this.fns = []
+
         this.levels = [...(levels ?? [])]
 
         this.level       = levels ? 1 : 0
@@ -32,6 +36,38 @@ class Game
         this.totalPoints = 0
 
         this.setWidth(w, h)
+    }
+
+
+    public static generateID = (): string => {
+        return Math.random().toString().slice(2)
+    }
+
+
+    public static triggerStaticFunctions(): void
+    {
+        for (const x of Game.fns)
+            x.fn()
+    }
+
+
+    public static removeFunction(id: string): void
+    {
+        const i: number = this.fns.findIndex(x => x.id === id)
+        
+        i !== -1 && this.fns.splice(i, 1)
+    }
+
+
+    public static hasFunction(id: string): boolean 
+    {
+        return Game.fns.some(x => x.id === id)
+    }
+
+
+    public static addFunction(id: string, fn: VoidFn): void
+    {
+        Game.fns.push({ id, fn })
     }
 
 
@@ -105,7 +141,7 @@ class Game
         const a: HTMLAudioElement = new Audio(path),
               id: string          = Math.random().toString().slice(2)
         
-        this.audios.push({ audio: a, id })
+        this.audios.push({ audio: a, path, id })
 
         a.onended = (): void => {
             const i: number = this.audios.findIndex(x => x.id === id)
@@ -118,6 +154,25 @@ class Game
             a.volume = 0
 
         a.play()
+    }
+
+
+    public is_audio_playing(path: string): boolean
+    {
+        return this.audios.some(x => x.path === path)
+    }
+
+
+    public stop_audio(path: string): void
+    {
+        const i: number = this.audios.findIndex(x => x.path === path)
+
+        if (i !== -1)
+        {
+            this.audios[i].audio.pause()
+            this.audios[i].audio.currentTime = 0
+            this.audios.splice(i, 1)
+        }
     }
 
 
@@ -157,7 +212,7 @@ class Game
 
     public update(fn: VoidFn): void
     {
-        const refresh = () => {
+        const refresh = (): void => {
             this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
 
             fn()

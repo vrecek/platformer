@@ -44,5 +44,11 @@ export type LevelLoader = 'next' | 'current'
 
 export type AudioObject = {
     audio: HTMLAudioElement
+    path:  string
     id:    string
+}
+
+export type GameFunctions = {
+    fn: VoidFn
+    id: string
 }
