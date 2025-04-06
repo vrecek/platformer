@@ -1,5 +1,7 @@
-import { AudioObject, CanvasStats, CollisionValues, GameFunctions, Level, LevelLoader, VoidFn } from "../interfaces/GameTypes"
+import { Maybe } from "../interfaces/EntityTypes"
+import { Achievement, AudioObject, CanvasStats, CollisionValues, GameFunctions, Level, LevelLoader, VoidFn } from "../interfaces/GameTypes"
 import Entity from "./entities/Entity"
+import Player from "./entities/Player"
 
 
 class Game
@@ -9,8 +11,9 @@ class Game
     private canvas:      HTMLCanvasElement
     private ctx:         CanvasRenderingContext2D
 
-    private level:       number
-    private levels:      Level[]
+    private level:        number
+    private levels:       Level[]
+    private achievements: Achievement[]
 
     private points:      number
     private totalPoints: number
@@ -19,15 +22,15 @@ class Game
     private audios:      AudioObject[]
 
 
-    public constructor(w: number, h: number, levels?: Level[])
+    public constructor(w?: number, h?: number, levels?: Level[])
     {
         this.canvas = document.querySelector('canvas')!
-        this.ctx    = this.canvas.getContext('2d')!
+        this.ctx    = this.canvas?.getContext('2d')!
+
+        if (w && h) this.setWidth(w, h)
 
         this.muted  = true
         this.audios = []
-
-        // this.fns = []
 
         this.levels = [...(levels ?? [])]
 
@@ -35,11 +38,69 @@ class Game
         this.points      = 0
         this.totalPoints = 0
 
-        this.setWidth(w, h)
+        this.achievements = [
+            {
+                img: '/data/items/item_invincibility.svg',
+                title: 'Grave I',
+                txt: 'Die 10 times',
+                type: 'dying',
+                pred: () => false
+            },
+            {
+                img: '/data/items/item_invincibility.svg',
+                title: 'Grave II',
+                txt: 'Die 100 times',
+                type: 'dying',
+                pred: () => false
+            },
+            {
+                img: '/data/player/player_dead.svg',
+                title: 'Unexpected casuality',
+                txt: 'Die from your own weapon',
+                type: 'dying',
+                pred: () => false
+            },
+            {
+                img: '/data/bullets.svg',
+                title: 'Shooter I',
+                txt: 'Fire 100 bullets',
+                type: 'firing',
+                pred: (plr: Player) => plr.getFiredShots() >= 100
+            },
+            {
+                img: '/data/bullets.svg',
+                title: 'Shooter II',
+                txt: 'Fire 2000 bullets',
+                type: 'firing',
+                pred: (plr: Player) => plr.getFiredShots() >= 2000
+            },
+            {
+                img: '/data/bullets.svg',
+                title: 'Shooter III',
+                txt: 'Fire 5000 bullets',
+                type: 'firing',
+                pred: (plr: Player) => plr.getFiredShots() >= 5000
+            },
+            {
+                img: '/data/weapons/pistol.svg',
+                title: 'Firearm',
+                txt: 'Get your first weapon',
+                type: 'weapon_get1',
+                pred: () => true
+            }
+    
+        ].toReversed().map((x, i) => { return {...x, id: `${i}` } })
+
+        const stored: string[] = JSON.parse(localStorage.getItem('unlocked_achievements') ?? '[]')
+
+        for (const x of this.achievements)
+            if (stored.includes(x.id))
+                Object.assign(x, {unlocked: true})
     }
 
 
-    public static generateID = (): string => {
+    public static generateID(): string
+    {
         return Math.random().toString().slice(2)
     }
 
@@ -68,6 +129,67 @@ class Game
     public static addFunction(id: string, fn: VoidFn): void
     {
         Game.fns.push({ id, fn })
+    }
+
+
+    public checkForAchievement(type: string, ...args: any): void
+    {
+        for (const x of this.achievements.filter(x => x.type === type))
+        {
+            if (x.pred(...args))
+                this.unlockAchievement(x.id)
+        }
+    }
+
+
+    public getAllAchievements(): [Achievement[], Achievement[]]
+    {
+        return [this.achievements, this.achievements.filter(x => x.unlocked)]
+    }
+
+
+    public unlockAchievement(id: string): void 
+    {
+        const prev: string[] = JSON.parse(window.localStorage.getItem('unlocked_achievements') ?? '[]')
+
+        if (!prev.includes(id) && this.achievements.some(x => x.id === id))
+        {
+            window.localStorage.setItem('unlocked_achievements', JSON.stringify([...prev, id]))
+            this.popupAchievement(id)
+        }
+    }
+
+
+    public popupAchievement(id: string): void
+    {
+        const achievement: Maybe<Achievement> = this.achievements.find(x => x.id === id)
+
+        if (!achievement) return
+
+        const tag = ['section', 'p', 'section', 'figure', 'img', 'article', 'p', 'p'],
+              [s1, p1, s2, f, i, a, p2, p3] = tag.map(x => document.createElement(x))
+
+        s1.className = 'achievement-popup'
+
+        p1.className   = 'header'
+        p1.textContent = 'Achievement unlocked'
+
+        ;(i as HTMLImageElement).src = achievement.img
+        ;(i as HTMLImageElement).loading = 'lazy'
+
+        p2.className   = 'title'
+        p2.textContent = achievement.title
+
+        p3.className   = 'text'
+        p3.textContent = achievement.txt
+
+        f.append(i)
+        a.append(p2, p3)
+        s2.append(f, a)
+        s1.append(p1, s2)
+        document.body.append(s1)
+
+        setTimeout(() => s1.remove(), 4000);
     }
 
 

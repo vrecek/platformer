@@ -52,3 +52,13 @@ export type GameFunctions = {
     fn: VoidFn
     id: string
 }
+
+export type Achievement = {
+    id:        string
+    img:       string
+    txt:       string
+    title:     string
+    type:      string
+    pred:      (...args: any) => boolean
+    unlocked?: boolean
+}

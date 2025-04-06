@@ -3,6 +3,64 @@ body {
     align-items: center;
     flex-direction: column;
 
+    section.achievement-popup {
+        position: fixed;
+        left: 50%;
+        top: 0;
+        translate: -50% -100%;
+        background: #323251;
+        padding: .75em;
+        width: 20%;
+        animation-name: popup, fadeout;
+        animation-duration: 1s;
+        animation-delay: 0s, 3s;
+        animation-fill-mode: forwards;
+
+        p.header {
+            font-weight: bold;
+            letter-spacing: -1px;
+            margin-bottom: .5em;
+        }
+
+        section {
+            display: flex;
+            align-items: flex-start;
+
+            figure {
+                width: 15%;
+                display: flex;
+
+                img {
+                    width: 100%;
+                }
+            }
+
+            article {
+                margin-left: .75em;
+
+                p.title {
+                    text-transform: uppercase;
+                    letter-spacing: -1px;
+                    color: #bbb;
+                }
+
+                p.text {
+                    font-size: .9rem;
+                }
+            }
+        }
+
+        @keyframes popup {
+            0%   { translate: -50% -100%; }
+            100% { translate: -50% 0; }
+        }
+
+        @keyframes fadeout {
+            0%   { opacity: 1; }
+            100% { opacity: 0; }
+        }
+    }
+
     main {
         display: flex;
         justify-content: space-between;

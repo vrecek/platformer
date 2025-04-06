@@ -1,0 +1,94 @@
+main.achievements-page {
+    padding: 2em 4em;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+
+    section.hs {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        h1 {
+            font-size: 3rem;
+            letter-spacing: 2px;
+            font-weight: 800;
+        }
+
+        h2 {
+            letter-spacing: -1px;
+            word-spacing: 6px;
+            font-weight: bold;
+        }
+    }
+
+    a {
+        width: max-content;
+        margin: 0 auto;
+        padding: 1em 2em;
+    }
+
+    section.container {
+        display: flex;
+        margin-top: 2em;
+        flex-wrap: wrap;
+        flex-grow: 1;
+        align-content: flex-start;
+
+        figure {
+            width: 80px;
+            aspect-ratio: 1;
+            background: #454F6B;
+            border-radius: .5em;
+            margin: 0 .5em 1em .5em;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid transparent;
+
+            img { width: 60%; }
+
+            div {
+                position: absolute;
+                left: 50%;
+                translate: -50% 0;
+                bottom: 100%;
+                background: #454F6B;
+                border-radius: .2em;
+                border: 1px solid #3A3A5B;
+                padding: .5em;
+                pointer-events: none;
+                width: max-content;
+                opacity: 0;
+                transition: 250ms;
+
+                p.title {
+                    font-size: 1.1rem;
+                    letter-spacing: -1px;
+                    font-weight: bold;
+                    text-transform: uppercase;
+                    margin-bottom: .2em;
+                    font-family: 'Courier New', Courier, monospace;
+                }
+
+                p.txt {
+                    font-size: 1rem;
+                    letter-spacing: -1px;
+                    color: #ddd;
+                }
+            }
+
+            &.locked {
+                border-color: #454F6B;
+                background: none;
+
+                img { width: 40%; }
+            }
+
+            &:hover div {
+                opacity: 1;
+            }
+        }
+    }
+}

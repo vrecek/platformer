@@ -63,6 +63,13 @@ let g_initPlayerPos: boolean      = false,
 
 // --------------------------------------------------------
 
+/*
+    SAVE ACHIEVEMTN VARIABLES TO THE LOCAL STORAGE (EG. fired_shots)
+    
+    ??? MOVE ACHIEVEMENT ACTIONS FROM THE CLASS TO THE index.ts 
+    ??? ( EG checkForAchievement() in playerShoot() instead of overrided PLAYER.shoot() )  
+*/
+
 const init = () => {
     if (GAME.insufficientScreenHandler())
         return
@@ -221,6 +228,12 @@ document.querySelector('img.sound-icon')?.addEventListener('click', (e: Event) =
 document.querySelector('.i-github')?.addEventListener('click', () => window.open('https://github.com/vrecek', '_blank'))
 
 
+document.querySelector('button.reset-btn')?.addEventListener('click', () => {
+    window.localStorage.removeItem('unlocked_achievements')
+    window.location.reload()
+})
+
+
 const getActiveIndex = (): [Element[] | null, number] => {
     if (!g_item_toggle) 
         return [null, -1]
@@ -307,6 +320,8 @@ const itemDrop = (): void => {
 const playerShoot = (): void => {
     PLAYER.shoot(displayAmmo)
     displayAmmo()
+
+    GAME.checkForAchievement('firing', PLAYER)
 }
 
 
@@ -355,6 +370,8 @@ const collidedWithWeapon = (weapon: WeaponItem): void => {
     PLAYER.setWeapon(weapon.getWeaponStats())
     displayWeapon()
     displayAmmo()
+
+    GAME.checkForAchievement('weapon_get1')
 }
 
 

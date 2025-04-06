@@ -4,6 +4,7 @@ import { CanvasStats, CollisionValues, KeysInput } from "../../interfaces/GameTy
 import { Bindings, PlayerEq, PlayerStats } from "../../interfaces/PlayerTypes.js"
 import Item from "./Item.js"
 import Action from "./Action.js"
+import Game from "../Game.js"
 
 
 
@@ -22,6 +23,8 @@ class Player extends Action
 
     private INIT_FINISH_VEL: number
     private COLL_PADDING:    number
+
+    private fired_shots:     number
 
     private isJumping:       boolean
     private isFalling:       boolean
@@ -45,6 +48,8 @@ class Player extends Action
         this.isFalling = false
 
         this.collisions = []
+
+        this.fired_shots = 0
 
         this.initVelocity   = jumpPower 
         this.finishVelocity = this.INIT_FINISH_VEL
@@ -417,6 +422,14 @@ class Player extends Action
     }
 
 
+    public override shoot(reloadCB?: () => void): void
+    {
+        this.fired_shots++
+        
+        super.shoot(reloadCB)
+    }
+
+
     public override drawShot(CTX: CanvasRenderingContext2D, b: Bullet)
     {
         const {x, y, w, h} = b.obj.getStats()
@@ -472,6 +485,12 @@ class Player extends Action
         }
 
         b.obj.draw(CTX)
+    }
+
+
+    public getFiredShots(): number
+    {
+        return this.fired_shots
     }
 
 
