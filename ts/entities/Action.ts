@@ -136,10 +136,10 @@ abstract class Action extends Entity
     }
 
 
-    public shoot(reloadCB?: () => void): void
+    public shoot(reloadCB?: () => void): boolean
     {
         if (this.has_shot || !this.weapon || this.weapon.is_reloading || !this.weapon.stats.mag_ammo) 
-            return
+            return false
 
 
         switch (this.weapon.type)
@@ -161,7 +161,7 @@ abstract class Action extends Entity
                 this.shotgunBullet(...this.getBulletImage('bullet', 20))
                 break
             
-            default: return
+            default: return false
         }
 
         if (!this.weapon.inf_ammo && ! --this.weapon.stats.mag_ammo && this.weapon.stats.total_ammo)
@@ -172,10 +172,10 @@ abstract class Action extends Entity
         setTimeout(() => this.has_shot = false, this.weapon.stats.shoot_cd)
 
 
-        if (this.gameobj?.is_audio_playing('/data/weapons/sounds/fire.wav'))
-            return
+        if (!this.gameobj?.is_audio_playing('/data/weapons/sounds/fire.wav'))
+            this.gameobj?.audio?.(this.weapon.wav)
 
-        this.gameobj?.audio?.(this.weapon.wav)
+        return true
     }
 
 

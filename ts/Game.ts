@@ -41,6 +41,20 @@ class Game
         this.achievements = [
             {
                 img: '/data/items/item_invincibility.svg',
+                title: 'Hunter I',
+                txt: 'Destroy your first enemy',
+                type: 'enemykill',
+                pred: (plr: Player) => plr.getKilledEnemies() >= 1
+            },
+            {
+                img: '/data/items/item_invincibility.svg',
+                title: 'Hunter II',
+                txt: 'Destroy 50 enemies',
+                type: 'enemykill',
+                pred: (plr: Player) => plr.getKilledEnemies() >= 50
+            },
+            {
+                img: '/data/items/item_invincibility.svg',
                 title: 'Grave I',
                 txt: 'Die 10 times',
                 type: 'dying',
@@ -57,8 +71,8 @@ class Game
                 img: '/data/player/player_dead.svg',
                 title: 'Unexpected casuality',
                 txt: 'Die from your own weapon',
-                type: 'dying',
-                pred: () => false
+                type: 'dyingself',
+                pred: () => true
             },
             {
                 img: '/data/bullets.svg',
@@ -89,7 +103,7 @@ class Game
                 pred: () => true
             }
     
-        ].toReversed().map((x, i) => { return {...x, id: `${i}` } })
+        ].map((x, i) => { return {...x, id: `${i}` } })
 
         const stored: string[] = JSON.parse(localStorage.getItem('unlocked_achievements') ?? '[]')
 
@@ -134,7 +148,7 @@ class Game
 
     public checkForAchievement(type: string, ...args: any): void
     {
-        for (const x of this.achievements.filter(x => x.type === type))
+        for (const x of this.achievements.filter(x => x.type === type && !x.unlocked))
         {
             if (x.pred(...args))
                 this.unlockAchievement(x.id)

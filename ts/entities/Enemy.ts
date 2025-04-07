@@ -17,10 +17,12 @@ class Enemy extends Action
     }
 
 
-    public override shoot(): void
+    public override shoot(): boolean
     {
         if (this.shooter && this.can_shoot)
-            super.shoot()
+            return super.shoot()
+
+        return false
     }
 
 

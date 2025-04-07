@@ -1,10 +1,9 @@
 import Entity from "./Entity.js"
-import { ActionDefaults, Bullet, Effects, EntityStats, FlameWeapon, Maybe } from "../../interfaces/EntityTypes.js"
+import { ActionDefaults, Bullet, DamageObject, Effects, EntityStats, FlameWeapon, Maybe } from "../../interfaces/EntityTypes.js"
 import { CanvasStats, CollisionValues, KeysInput } from "../../interfaces/GameTypes.js"
 import { Bindings, PlayerEq, PlayerStats } from "../../interfaces/PlayerTypes.js"
 import Item from "./Item.js"
 import Action from "./Action.js"
-import Game from "../Game.js"
 
 
 
@@ -24,7 +23,8 @@ class Player extends Action
     private INIT_FINISH_VEL: number
     private COLL_PADDING:    number
 
-    private fired_shots:     number
+    private fired_shots:     number // SAVE THIS SECTION TO localStorage
+    private killed_enemies:  number
 
     private isJumping:       boolean
     private isFalling:       boolean
@@ -49,7 +49,8 @@ class Player extends Action
 
         this.collisions = []
 
-        this.fired_shots = 0
+        this.fired_shots    = 0
+        this.killed_enemies = 0
 
         this.initVelocity   = jumpPower 
         this.finishVelocity = this.INIT_FINISH_VEL
@@ -271,6 +272,72 @@ class Player extends Action
     }
 
 
+    public isTouchingGround(): boolean
+    {
+        return !this.isJumping && !this.isFalling
+    }
+
+
+    public jump(): void
+    {
+        this.initVelocity = this.jumpPower
+        this.handleJumping(true)
+    }
+
+
+    public changePlayerMovementStatus(enabled: boolean): void 
+    {
+        this.movementStatus = enabled
+    }
+
+
+    public resetJumpState(): void 
+    {
+        this.isJumping      = false
+        this.isFalling      = false
+        this.initVelocity   = this.jumpPower
+        this.finishVelocity = this.jumpPower / 10
+    }
+
+
+    // ---------------------------------------------------
+    // ----------------- KEY HANDLERS --------------------
+    // ---------------------------------------------------
+
+    public addBinding(action: string, keys: string[], fn: ()=>void): void
+    {
+        this.bindings[action] = { keys, fn }
+        this.flat_bindings    = Object.values(this.bindings).map(x => x.keys).flat()
+    }
+
+    public resetBlockedKeys(): void 
+    {
+        this.blockedKeys.clear()
+    }
+
+    public addKey(key: string): void
+    {
+        if (!this.flat_bindings.includes(key) || this.keys.pressedKeys.includes(key))
+            return
+
+        this.keys.pressed = true
+        this.keys.pressedKeys.push(key)
+    }
+
+    public removeKey(key: string): void
+    {
+        this.keys.pressedKeys.splice(this.keys.pressedKeys.indexOf(key), 1)
+
+        if (!this.keys.pressedKeys.length)
+            this.keys.pressed = false
+    }
+
+    public initPressKeyEvents(): void 
+    {
+        window.addEventListener('keydown', ({key}) => this.addKey(key))
+        window.addEventListener('keyup', ({key}) => this.removeKey(key))
+    }
+
     public handleStandardMoveKeys(): void 
     {
         if (this.checkMovementCondition())
@@ -290,7 +357,6 @@ class Player extends Action
             this.x += this.speedx
     }
 
-
     public handleAdvancedMoveKeys(): void 
     {
         this.handleJumping()
@@ -305,130 +371,28 @@ class Player extends Action
         }
     }
 
+    // ---------------------------------------------------
+    // ------------------- OVERRIDES ---------------------
+    // ---------------------------------------------------
 
-    public isTouchingGround(): boolean
-    {
-        return !this.isJumping && !this.isFalling
+    public override deal_damage(target: Action, bullet?: Bullet): DamageObject {
+        const damage_result: DamageObject = super.deal_damage(target, bullet)
+
+        if (damage_result.killed)
+            this.killed_enemies++
+
+        return damage_result
     }
 
-
-    public addKey(key: string): void
+    public override shoot(reloadCB?: () => void): boolean
     {
-        if (!this.flat_bindings.includes(key) || this.keys.pressedKeys.includes(key))
-            return
+        const shot: boolean = super.shoot(reloadCB)
 
-        this.keys.pressed = true
-        this.keys.pressedKeys.push(key)
-    }
-
-
-    public removeKey(key: string): void
-    {
-        this.keys.pressedKeys.splice(this.keys.pressedKeys.indexOf(key), 1)
-
-        if (!this.keys.pressedKeys.length)
-            this.keys.pressed = false
-    }
-
-
-    public jump(): void
-    {
-        this.initVelocity = this.jumpPower
-        this.handleJumping(true)
-    }
-
-
-    public initPressKeyEvents(): void 
-    {
-        window.addEventListener('keydown', ({key}) => this.addKey(key))
-        window.addEventListener('keyup', ({key}) => this.removeKey(key))
-    }
-
-
-    public changePlayerMovementStatus(enabled: boolean): void 
-    {
-        this.movementStatus = enabled
-    }
-
-
-    public resetBlockedKeys(): void 
-    {
-        this.blockedKeys.clear()
-    }
-
-
-    public resetJumpState(): void 
-    {
-        this.isJumping      = false
-        this.isFalling      = false
-        this.initVelocity   = this.jumpPower
-        this.finishVelocity = this.jumpPower / 10
-    }
-
-
-    public getMovementStatus(): boolean
-    {
-        return this.movementStatus
-    }
-
-
-    public addBinding(action: string, keys: string[], fn: ()=>void): void
-    {
-        this.bindings[action] = { keys, fn }
-        this.flat_bindings    = Object.values(this.bindings).map(x => x.keys).flat()
-    }
-
-
-    public setPlayerJumpPower(power: number): void
-    {
-        this.jumpPower = power
-    }
-
-    
-    public setPlayerSpeed(speed: number): void
-    {
-        this.speedx = speed
-    }
-
-
-    public setItem(index: number, item: Item): void
-    {
-        this.curr_items[index] = item
-    }
-
-
-    public clearItem(index: number): void
-    {
-        this.curr_items[index] = null
-    }
-
-
-    public loadEquipment(): void
-    {
-        this.curr_items = [...this.start_items]
-    }
-
-
-    public saveEquipment(): void
-    {
-        this.start_items = [...this.curr_items]
-    }
-
-
-    public addActiveEffect(effects: string[], item?: Item): void
-    {
-        this.activeEffects.push(...effects)
-        item && this.activeItems.push(item)
-    }
-
-
-    public override shoot(reloadCB?: () => void): void
-    {
-        this.fired_shots++
+        if (shot)
+            this.fired_shots++
         
-        super.shoot(reloadCB)
+        return shot
     }
-
 
     public override drawShot(CTX: CanvasRenderingContext2D, b: Bullet)
     {
@@ -487,25 +451,34 @@ class Player extends Action
         b.obj.draw(CTX)
     }
 
+    // ---------------------------------------------------
+    // ------------------- EQUIPMENT ---------------------
+    // ---------------------------------------------------
 
-    public getFiredShots(): number
+    public clearItem(index: number): void
     {
-        return this.fired_shots
+        this.curr_items[index] = null
     }
 
-
-    public getActiveItem(effect: string): Maybe<Item>
+    public loadEquipment(): void
     {
-        return this.activeItems.filter(x => x.getStats().name === effect)?.[0]
+        this.curr_items = [...this.start_items]
     }
 
+    public saveEquipment(): void
+    {
+        this.start_items = [...this.curr_items]
+    }
+
+    // ---------------------------------------------------
+    // ------------------- EFFECTS -----------------------
+    // ---------------------------------------------------
 
     public isEffectActive(effect: Effects, with_item?: boolean): boolean
     {
         return this.activeEffects.includes(effect) 
                && (with_item ? this.activeItems.some(x => x.getStats().name === effect) : true)
     }
-
 
     public removeActiveEffect(name: string, from_items?: boolean): void
     {
@@ -515,12 +488,41 @@ class Player extends Action
             this.activeItems = this.activeItems.filter(x => x.getStats().name !== name)
     }
 
+    public addActiveEffect(effects: string[], item?: Item): void
+    {
+        this.activeEffects.push(...effects)
+
+        item && this.activeItems.push(item)
+    }
+
+    // ---------------------------------------------------
+    // ------------------- GETTERS -----------------------
+    // ---------------------------------------------------
+
+    public getFiredShots(): number
+    {
+        return this.fired_shots
+    }
+
+    public getKilledEnemies(): number
+    {
+        return this.killed_enemies
+    }
+
+    public getMovementStatus(): boolean
+    {
+        return this.movementStatus
+    }
+
+    public getActiveItem(effect: string): Maybe<Item>
+    {
+        return this.activeItems.filter(x => x.getStats().name === effect)?.[0]
+    }
 
     public getActiveEffects(): string[]
     {
         return this.activeEffects
     }
-
 
     public override getStats(): PlayerStats
     {
@@ -531,10 +533,28 @@ class Player extends Action
         }
     }
 
-
     public get items(): PlayerEq
     {
         return this.curr_items
+    }
+
+    // ---------------------------------------------------
+    // ------------------- SETTERS -----------------------
+    // ---------------------------------------------------
+
+    public setPlayerJumpPower(power: number): void
+    {
+        this.jumpPower = power
+    }
+    
+    public setPlayerSpeed(speed: number): void
+    {
+        this.speedx = speed
+    }
+
+    public setItem(index: number, item: Item): void
+    {
+        this.curr_items[index] = item
     }
 }
 

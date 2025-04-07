@@ -143,7 +143,14 @@ const init = () => {
                                 enemy.displayDamage(CTX, dmg.dmgdealt)
 
                             if (dmg.killed)
+                            {
+                                if (enemy instanceof Player)
+                                    GAME.checkForAchievement('dyingself')
+                                else
+                                    GAME.checkForAchievement('enemykill', PLAYER)
+
                                 removeEntity('enemies', enemy.getStats().id)
+                            }
                         })
                     }
                 }
