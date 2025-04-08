@@ -43,8 +43,8 @@ const DEFAULT_SPEED: number = 3,
 
 const PLAYER: Player = new Player(210, 30, 40, 40, DEFAULT_SPEED, DEFAULT_JUMP, {
     // weapon: new WeaponItem(0, 0, 'rocketlauncher').getWeaponStats(),
-    // weapon: new WeaponItem(0, 0, 'smg').getWeaponStats(),
-    weapon: new WeaponItem(0, 0, 'flamethrower').getWeaponStats(),
+    weapon: new WeaponItem(0, 0, 'smg').getWeaponStats(),
+    // weapon: new WeaponItem(0, 0, 'flamethrower').getWeaponStats(),
     // weapon: new WeaponItem(0, 0, 'shotgun').getWeaponStats(),
     // weapon: new WeaponItem(0, 0, 'pistol').getWeaponStats(),
     game: GAME
@@ -64,10 +64,19 @@ let g_initPlayerPos: boolean      = false,
 // --------------------------------------------------------
 
 /*
-    SAVE ACHIEVEMTN VARIABLES TO THE LOCAL STORAGE (EG. fired_shots)
-    
-    ??? MOVE ACHIEVEMENT ACTIONS FROM THE CLASS TO THE index.ts 
-    ??? ( EG checkForAchievement() in playerShoot() instead of overrided PLAYER.shoot() )  
+    =localStorage=
+    unlocked_achievements: string[] (id)
+    unlocked_lvl:          number[] (1|0)
+    player_stats:          PlayerSavedStats
+*/
+
+/*
+    =TD=
+    vertical radius range bullet weapons
+    change shotgun shot
+    machine gun
+    grenade slot
+    grenade/mine
 */
 
 const init = () => {
@@ -236,7 +245,7 @@ document.querySelector('.i-github')?.addEventListener('click', () => window.open
 
 
 document.querySelector('button.reset-btn')?.addEventListener('click', () => {
-    window.localStorage.removeItem('unlocked_achievements')
+    Game.storage_clear()
     window.location.reload()
 })
 

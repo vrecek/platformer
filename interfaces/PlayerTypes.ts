@@ -29,3 +29,8 @@ export type ActivationObject = {
     init_jump:   number
     init_speed:  number
 }
+
+export type PlayerSavedStats = {
+    fired_shots:    number
+    killed_enemies: number
+}

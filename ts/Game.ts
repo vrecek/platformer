@@ -105,7 +105,7 @@ class Game
     
         ].map((x, i) => { return {...x, id: `${i}` } })
 
-        const stored: string[] = JSON.parse(localStorage.getItem('unlocked_achievements') ?? '[]')
+        const stored: string[] = Game.storage_load('unlocked_achievements') ?? []
 
         for (const x of this.achievements)
             if (stored.includes(x.id))
@@ -118,13 +118,16 @@ class Game
         return Math.random().toString().slice(2)
     }
 
+    public static degToRad(deg: number): number
+    {
+        return deg * (Math.PI / 180)
+    }
 
     public static triggerStaticFunctions(): void
     {
         for (const x of Game.fns)
             x.fn()
     }
-
 
     public static removeFunction(id: string): void
     {
@@ -133,16 +136,29 @@ class Game
         i !== -1 && this.fns.splice(i, 1)
     }
 
-
     public static hasFunction(id: string): boolean 
     {
         return Game.fns.some(x => x.id === id)
     }
 
-
     public static addFunction(id: string, fn: VoidFn): void
     {
         Game.fns.push({ id, fn })
+    }
+
+    public static storage_save(key: string, val: any): void
+    {
+        localStorage.setItem(key, JSON.stringify(val))
+    }
+
+    public static storage_load<T>(key: string): T
+    {
+        return JSON.parse(localStorage.getItem(key) ?? 'null')
+    }
+
+    public static storage_clear(key?: string): void
+    {
+        key ? localStorage.removeItem(key) : localStorage.clear()
     }
 
 
@@ -164,11 +180,11 @@ class Game
 
     public unlockAchievement(id: string): void 
     {
-        const prev: string[] = JSON.parse(window.localStorage.getItem('unlocked_achievements') ?? '[]')
+        const prev: string[] = Game.storage_load('unlocked_achievements') ?? []
 
         if (!prev.includes(id) && this.achievements.some(x => x.id === id))
         {
-            window.localStorage.setItem('unlocked_achievements', JSON.stringify([...prev, id]))
+            Game.storage_save('unlocked_achievements', [...prev, id])
             this.popupAchievement(id)
         }
     }
@@ -327,7 +343,7 @@ class Game
 
     public unlockLevel(lvl: number): void
     {
-        let lvls: number[] = JSON.parse(localStorage.getItem('unlocked_lvl') ?? 'null')
+        let lvls: number[] = Game.storage_load('unlocked_lvl')
 
         if (!lvls)
         {
@@ -342,7 +358,7 @@ class Game
 
         lvls[lvl] = 1
 
-        localStorage.setItem('unlocked_lvl', JSON.stringify(lvls))
+        Game.storage_save('unlocked_lvl', lvls)
     }
 
 

@@ -43,11 +43,23 @@ abstract class Action extends Entity
 
     private singleBullet(x: number, img: string, dir: BulletDirection): void
     {
+        const dg  = 1,
+              ang = Game.degToRad(Math.random() * (dg - -dg) + -dg )
+
         const obj: Entity = new Entity(x, this.y, 20, 10, {image: img})
 
-        this.shots.push({obj, dir, dirX: 1, dirY: 0, type: 'regular'})
+        this.shots.push({obj, dir, dirX: Math.cos(ang), dirY: Math.sin(ang), type: 'regular'})
         
         setTimeout(() => this.removeBullet(obj), this.bullet_cd)
+        // const obj: Entity = new Entity(x, this.y, 20, 10, {image: img})
+
+        // const ang = ( Math.random() * (30 - 0) + 0 ) * (Math.PI / 180)
+        // const dx = Math.cos(ang) * this.weapon!.stats.bullet_speed
+        // const dy = Math.sin(ang) * this.weapon!.stats.bullet_speed
+
+        // this.shots.push({obj, dir, dirX: 1, dirY: 0, type: 'regular'})
+        
+        // setTimeout(() => this.removeBullet(obj), this.bullet_cd)
     }
 
     private shotgunBullet(x: number, img: string, dir: BulletDirection): void

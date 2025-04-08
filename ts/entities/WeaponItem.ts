@@ -1,5 +1,5 @@
 import { Weapon, WeaponStats, WeaponType } from "../../interfaces/EntityTypes.js";
-import degToRad from "../utils/degToRad.js";
+import Game from "../Game.js";
 import Entity from "./Entity.js";
 
 
@@ -26,7 +26,7 @@ class WeaponItem extends Entity
                 wav   = '/data/weapons/sounds/pistol.wav'
                 stats = { 
                     bullet_dmg: 10, shoot_cd: 500, bullet_speed: 7, mag_ammo: 7,
-                    total_ammo: 28, reload_time: 500, max_ammo: 28,
+                    total_ammo: 28, reload_time: 500, max_ammo: 28
                 }
 
                 super(x, y, 60, 60, {image})
@@ -36,7 +36,7 @@ class WeaponItem extends Entity
                 image = '/data/weapons/smg.svg'
                 wav   = '/data/weapons/sounds/pistol.wav'
                 stats = { 
-                    bullet_dmg: 7, shoot_cd: 120, bullet_speed: 7,  max_ammo: 60,
+                    bullet_dmg: 7, shoot_cd: 180, bullet_speed: 6,  max_ammo: 60,
                     mag_ammo: 30, total_ammo: 60, reload_time: 800
                 }
 
@@ -69,7 +69,7 @@ class WeaponItem extends Entity
             case 'shotgun':
                 const angle:   number = 15,
                       blt_nr:  number = 4, //8,
-                      a_start: number = degToRad(-angle)
+                      a_start: number = Game.degToRad(-angle)
 
 
                 image = '/data/weapons/shotgun.svg'
@@ -79,7 +79,7 @@ class WeaponItem extends Entity
                     reload_time: 1000,
                     angle_start: a_start, 
                     bullet_nr:   blt_nr,
-                    angle_step:  (degToRad(angle) - a_start) / (blt_nr - 1) //(Math.PI*2)/blt_nr
+                    angle_step:  (Game.degToRad(angle) - a_start) / (blt_nr - 1) //(Math.PI*2)/blt_nr
                 }
 
                 super(x, y, 60, 60, {image})

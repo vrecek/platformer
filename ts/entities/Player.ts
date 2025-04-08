@@ -1,9 +1,10 @@
 import Entity from "./Entity.js"
 import { ActionDefaults, Bullet, DamageObject, Effects, EntityStats, FlameWeapon, Maybe } from "../../interfaces/EntityTypes.js"
 import { CanvasStats, CollisionValues, KeysInput } from "../../interfaces/GameTypes.js"
-import { Bindings, PlayerEq, PlayerStats } from "../../interfaces/PlayerTypes.js"
+import { Bindings, PlayerEq, PlayerSavedStats, PlayerStats } from "../../interfaces/PlayerTypes.js"
 import Item from "./Item.js"
 import Action from "./Action.js"
+import Game from "../Game.js"
 
 
 
@@ -23,7 +24,7 @@ class Player extends Action
     private INIT_FINISH_VEL: number
     private COLL_PADDING:    number
 
-    private fired_shots:     number // SAVE THIS SECTION TO localStorage
+    private fired_shots:     number
     private killed_enemies:  number
 
     private isJumping:       boolean
@@ -41,6 +42,8 @@ class Player extends Action
     {
         super(x, y, w, h, {image: "/data/player/player.svg", act_defaults})
 
+        const saved: Maybe<PlayerSavedStats> = Game.storage_load('player_stats')
+
         this.INIT_FINISH_VEL = jumpPower / 10
         this.COLL_PADDING    = .5
 
@@ -49,8 +52,16 @@ class Player extends Action
 
         this.collisions = []
 
-        this.fired_shots    = 0
-        this.killed_enemies = 0
+        if (!saved)
+        {
+            Game.storage_save('player_stats', {
+                fired_shots: 0,
+                killed_enemies: 0
+            })
+        }
+
+        this.fired_shots    = saved?.fired_shots ?? 0
+        this.killed_enemies = saved?.killed_enemies ?? 0
 
         this.initVelocity   = jumpPower 
         this.finishVelocity = this.INIT_FINISH_VEL
@@ -124,6 +135,18 @@ class Player extends Action
     {
         for (const x of this.bindings[action].keys)
             this.blockedKeys.add(x)
+    }
+
+    private change_stats(key: keyof PlayerSavedStats, val: number | 'increment'): void
+    {
+        const curr: PlayerSavedStats = Game.storage_load('player_stats')
+
+        if (val === 'increment') 
+            curr[key]++
+        else 
+            curr[key] = val
+
+        Game.storage_save('player_stats', curr)
     }
 
 
@@ -379,7 +402,10 @@ class Player extends Action
         const damage_result: DamageObject = super.deal_damage(target, bullet)
 
         if (damage_result.killed)
+        {
             this.killed_enemies++
+            this.change_stats('killed_enemies', 'increment')
+        }
 
         return damage_result
     }
@@ -388,8 +414,11 @@ class Player extends Action
     {
         const shot: boolean = super.shoot(reloadCB)
 
-        if (shot)
+        if (this.weapon?.type !== 'flamethrower' && shot)
+        {
             this.fired_shots++
+            this.change_stats('fired_shots', 'increment')
+        }
         
         return shot
     }
