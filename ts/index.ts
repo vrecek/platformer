@@ -46,6 +46,7 @@ const PLAYER: Player = new Player(210, 30, 40, 40, DEFAULT_SPEED, DEFAULT_JUMP, 
     weapon: new WeaponItem(0, 0, 'smg').getWeaponStats(),
     // weapon: new WeaponItem(0, 0, 'flamethrower').getWeaponStats(),
     // weapon: new WeaponItem(0, 0, 'shotgun').getWeaponStats(),
+    // weapon: new WeaponItem(0, 0, 'machinegun').getWeaponStats(),
     // weapon: new WeaponItem(0, 0, 'pistol').getWeaponStats(),
     game: GAME
 })
@@ -72,11 +73,8 @@ let g_initPlayerPos: boolean      = false,
 
 /*
     =TD=
-    vertical radius range bullet weapons
-    change shotgun shot
-    machine gun
-    grenade slot
-    grenade/mine
+    reload indicator (bar)
+    enemy shoot when height is similar, ?and? if theres no obstacle
 */
 
 const init = () => {

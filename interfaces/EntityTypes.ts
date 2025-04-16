@@ -126,8 +126,6 @@ export type PistolWeapon = WeaponCommon & {
 }
 
 export type ShotgunWeapon = WeaponCommon & {
-    angle_start: number
-    angle_step:  number
     bullet_nr:   number
 }
 
@@ -138,9 +136,9 @@ export type FlameWeapon = WeaponCommon & {
 
 export type WeaponStats = PistolWeapon | ShotgunWeapon | FlameWeapon
 
-export type WeaponType = 'pistol' | 'shotgun' | 'smg' | 'rocketlauncher' | 'flamethrower'
+export type WeaponType = 'pistol' | 'shotgun' | 'smg' | 'rocketlauncher' | 'flamethrower' | 'machinegun'
 
-export type WeaponStat = 'bullet_speed' | 'bullet_dmg' | 'shoot_cd' | 
+export type WeaponStat = 'bullet_speed' | 'bullet_dmg' | 'shoot_cd' | 'angle' |
                          'mag_ammo' | 'total_ammo' | 'reload_time' | 'max_ammo'
 
 export type DamageObject = {

@@ -43,43 +43,27 @@ abstract class Action extends Entity
 
     private singleBullet(x: number, img: string, dir: BulletDirection): void
     {
-        const dg  = 1,
-              ang = Game.degToRad(Math.random() * (dg - -dg) + -dg )
+        const dg  = this.weapon!.stats.angle,
+              ang = Game.degToRad(Math.random() * (dg - -dg) + -dg)
 
         const obj: Entity = new Entity(x, this.y, 20, 10, {image: img})
 
         this.shots.push({obj, dir, dirX: Math.cos(ang), dirY: Math.sin(ang), type: 'regular'})
         
         setTimeout(() => this.removeBullet(obj), this.bullet_cd)
-        // const obj: Entity = new Entity(x, this.y, 20, 10, {image: img})
-
-        // const ang = ( Math.random() * (30 - 0) + 0 ) * (Math.PI / 180)
-        // const dx = Math.cos(ang) * this.weapon!.stats.bullet_speed
-        // const dy = Math.sin(ang) * this.weapon!.stats.bullet_speed
-
-        // this.shots.push({obj, dir, dirX: 1, dirY: 0, type: 'regular'})
-        
-        // setTimeout(() => this.removeBullet(obj), this.bullet_cd)
     }
 
     private shotgunBullet(x: number, img: string, dir: BulletDirection): void
     {
         const gun: ShotgunWeapon = this.weapon!.stats as ShotgunWeapon
 
-        // for (let i = 0; i < gun.bullet_nr; i++)
-        // {   
-        //     const angle = i * gun.angle_step,
-        //           obj   = new Entity(x, this.y, 20, 10, {image: img})
+        const angle_start: number = Game.degToRad(-gun.angle),
+              angle_step:  number = (Game.degToRad(gun.angle) - angle_start) / (gun.bullet_nr - 1)
 
-
-        //     this.shots.push({obj, dir, dirX: Math.cos(angle), dirY: Math.sin(angle), type: 'regular', rad:120,ang:angle })
-
-        //     setTimeout(() => this.removeBullet(obj), this.bullet_cd)
-        // }
 
         for (let i = 0; i < gun.bullet_nr; i++)
         {   
-            const angle = gun.angle_start + i * gun.angle_step,
+            const angle = angle_start + i * angle_step,
                   obj   = new Entity(x, this.y, 20, 10, {image: img})
 
 
@@ -93,7 +77,7 @@ abstract class Action extends Entity
     {
         const obj: Entity = new Entity(x, this.y, 50, 20, {image: img})
 
-        this.shots.push({obj, dir, dirX: 1, dirY: 0, type: 'explosive'})
+        this.shots.push({obj, dir, dirX: 1, dirY: Math.sin(Game.degToRad(this.weapon!.stats.angle)), type: 'explosive'})
         
         setTimeout(() => this.removeBullet(obj), this.bullet_cd)
     }
@@ -158,6 +142,7 @@ abstract class Action extends Entity
         {
             case 'pistol':
             case 'smg':
+            case 'machinegun':
                 this.singleBullet(...this.getBulletImage('bullet', 20))
                 break
 

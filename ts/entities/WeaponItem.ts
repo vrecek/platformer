@@ -25,8 +25,19 @@ class WeaponItem extends Entity
                 image = '/data/weapons/pistol.svg'
                 wav   = '/data/weapons/sounds/pistol.wav'
                 stats = { 
-                    bullet_dmg: 10, shoot_cd: 500, bullet_speed: 7, mag_ammo: 7,
-                    total_ammo: 28, reload_time: 500, max_ammo: 28
+                    bullet_dmg: 10, shoot_cd: 500, bullet_speed: 6, mag_ammo: 7,
+                    total_ammo: 28, reload_time: 500, max_ammo: 28, angle: 2
+                }
+
+                super(x, y, 60, 60, {image})
+                break
+
+            case 'machinegun':
+                image = '/data/weapons/machinegun.svg'
+                wav   = '/data/weapons/sounds/pistol.wav'
+                stats = { 
+                    bullet_dmg: 6, shoot_cd: 100, bullet_speed: 7, mag_ammo: 60,
+                    total_ammo: 60, reload_time: 2000, max_ammo: 120, angle: 5
                 }
 
                 super(x, y, 60, 60, {image})
@@ -36,8 +47,8 @@ class WeaponItem extends Entity
                 image = '/data/weapons/smg.svg'
                 wav   = '/data/weapons/sounds/pistol.wav'
                 stats = { 
-                    bullet_dmg: 7, shoot_cd: 180, bullet_speed: 6,  max_ammo: 60,
-                    mag_ammo: 30, total_ammo: 60, reload_time: 800
+                    bullet_dmg: 7, shoot_cd: 170, bullet_speed: 7,  max_ammo: 60,
+                    mag_ammo: 30, total_ammo: 60, reload_time: 800, angle: 1.5
                 }
 
                 super(x, y, 60, 60, {image})
@@ -48,7 +59,7 @@ class WeaponItem extends Entity
                 wav   = '/data/weapons/sounds/rocketlauncher.wav'
                 stats = { 
                     bullet_dmg: 15, shoot_cd: 2000, bullet_speed: 6, max_ammo: 3,
-                    mag_ammo: 1, total_ammo: 3, reload_time: 2000
+                    mag_ammo: 1, total_ammo: 3, reload_time: 2000, angle: 1
                 }
 
                 super(x, y, 60, 60, {image})
@@ -60,16 +71,15 @@ class WeaponItem extends Entity
                 stats = { 
                     bullet_dmg: 5, shoot_cd: 0, bullet_speed: 4, max_ammo: 400,
                     mag_ammo: 200, total_ammo: 0, reload_time: 2500,
-                    maxflame: 300, flamestep: 20
+                    maxflame: 300, flamestep: 20, angle: 0
                 }
 
                 super(x, y, 60, 60, {image})
                 break
 
             case 'shotgun':
-                const angle:   number = 15,
-                      blt_nr:  number = 4, //8,
-                      a_start: number = Game.degToRad(-angle)
+                const angle:   number = 10,
+                      blt_nr:  number = 4
 
 
                 image = '/data/weapons/shotgun.svg'
@@ -77,9 +87,8 @@ class WeaponItem extends Entity
                 stats = {
                     bullet_dmg: 10, shoot_cd: 1000, bullet_speed: 6, mag_ammo: 4, total_ammo: 12, max_ammo: 12,
                     reload_time: 1000,
-                    angle_start: a_start, 
                     bullet_nr:   blt_nr,
-                    angle_step:  (Game.degToRad(angle) - a_start) / (blt_nr - 1) //(Math.PI*2)/blt_nr
+                    angle,
                 }
 
                 super(x, y, 60, 60, {image})

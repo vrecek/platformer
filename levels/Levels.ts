@@ -20,7 +20,7 @@ const getLevels = (game?: Game): Level[] => {
                 new Ammo(520, 570)
             ],
             weapons: [
-                new WeaponItem(450, 540, 'flamethrower')
+                new WeaponItem(450, 540, 'machinegun')
             ],
             enemies: [
                 new Enemy(650, 560, 40, 40, {
