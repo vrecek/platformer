@@ -1,4 +1,5 @@
-import { Bullet, BulletDirection, DamageObject, EntityStats, FlameWeapon, Maybe, OptionalActionArgs, ShootDirection, ShotgunWeapon, Weapon, WeaponStat } from "../../interfaces/EntityTypes.js";
+import { ActionArgs, Bullet, BulletDirection, DamageObject, EntityStats, FlameWeapon, Maybe, ShootDirection, ShotgunWeapon, Weapon, WeaponStat } from "../../interfaces/EntityTypes.js";
+import { VoidFn } from "../../interfaces/GameTypes.js";
 import { ActionStats } from "../../interfaces/PlayerTypes.js";
 import Game from "../Game.js";
 import Entity from "./Entity.js";
@@ -6,11 +7,11 @@ import Entity from "./Entity.js";
 
 abstract class Action extends Entity
 {
-    private has_shot:     boolean
-    private bullet_cd:    number
-    private shots:        Bullet[]
-    private reload_timer: number | undefined
-    private godmode:      boolean
+    private has_shot:        boolean
+    private bullet_lifetime: number
+    private shots:           Bullet[]
+    private reload_timer:    number | undefined
+    private godmode:         boolean
 
     protected weapon:       Maybe<Weapon>
     protected weapon_def:   Maybe<Weapon>
@@ -50,7 +51,7 @@ abstract class Action extends Entity
 
         this.shots.push({obj, dir, dirX: Math.cos(ang), dirY: Math.sin(ang), type: 'regular'})
         
-        setTimeout(() => this.removeBullet(obj), this.bullet_cd)
+        setTimeout(() => this.removeBullet(obj), this.bullet_lifetime)
     }
 
     private shotgunBullet(x: number, img: string, dir: BulletDirection): void
@@ -69,7 +70,7 @@ abstract class Action extends Entity
 
             this.shots.push({obj, dir, dirX: Math.cos(angle), dirY: Math.sin(angle), type: 'regular' })
 
-            setTimeout(() => this.removeBullet(obj), this.bullet_cd)
+            setTimeout(() => this.removeBullet(obj), this.bullet_lifetime)
         }
     }
 
@@ -79,7 +80,7 @@ abstract class Action extends Entity
 
         this.shots.push({obj, dir, dirX: 1, dirY: Math.sin(Game.degToRad(this.weapon!.stats.angle)), type: 'explosive'})
         
-        setTimeout(() => this.removeBullet(obj), this.bullet_cd)
+        setTimeout(() => this.removeBullet(obj), this.bullet_lifetime)
     }
 
     private flamethrowerBullet(x: number, img: string, dir: BulletDirection): void
@@ -111,28 +112,28 @@ abstract class Action extends Entity
     }
 
 
-    protected constructor(x: number, y: number, w: number, h: number, args?: Maybe<OptionalActionArgs>)
+    protected constructor(x: number, y: number, w: number, h: number, args?: Maybe<ActionArgs>)
     {
         super(x, y, w, h, args)
 
-        this.gameobj    = args?.act_defaults?.game
+        this.gameobj    = args?.game
 
         this.has_shot   = false
         this.shots      = []
-        this.last_dir   = args?.act_defaults?.direction ?? 'right'
+        this.last_dir   = args?.direction ?? 'right'
 
-        this.health     = args?.act_defaults?.health ?? 100
+        this.health     = args?.health ?? 100
         this.def_health = this.health
         this.godmode    = args?.godmode ?? false
 
-        this.bullet_cd    = 2000
-        this.weapon       = this.weapon_copy(args?.act_defaults?.weapon)
-        this.weapon_def   = this.weapon_copy(args?.act_defaults?.weapon)
-        this.weapon_saved = this.weapon_copy(args?.act_defaults?.weapon)
+        this.bullet_lifetime = 2000
+        this.weapon          = this.weapon_copy(args?.weapon)
+        this.weapon_def      = this.weapon_copy(args?.weapon)
+        this.weapon_saved    = this.weapon_copy(args?.weapon)
     }
 
 
-    public shoot(reloadCB?: () => void): boolean
+    public shoot(reloadCB?: Maybe<VoidFn>): boolean
     {
         if (this.has_shot || !this.weapon || this.weapon.is_reloading || !this.weapon.stats.mag_ammo) 
             return false
@@ -161,7 +162,7 @@ abstract class Action extends Entity
             default: return false
         }
 
-        if (!this.weapon.inf_ammo && ! --this.weapon.stats.mag_ammo && this.weapon.stats.total_ammo)
+        if (!this.weapon.inf_ammo && !--this.weapon.stats.mag_ammo && this.weapon.stats.total_ammo)
             this.reload(reloadCB)
 
 
@@ -208,13 +209,14 @@ abstract class Action extends Entity
     }
 
 
-    public reload(reloadCB?: () => void): void
+    public reload(reloadCB?: Maybe<VoidFn>): void
     {
         if (
             this.weapon?.is_reloading || !this.weapon || !this.weapon.stats.total_ammo ||
             this.weapon.stats.mag_ammo === this.weapon_def?.stats.mag_ammo
         ) 
             return
+
 
         this.weapon.is_reloading = true
         this.gameobj?.audio?.('/data/weapons/sounds/reload.wav')
@@ -235,25 +237,30 @@ abstract class Action extends Entity
             this.weapon.stats.mag_ammo    = new_mag
             this.weapon.is_reloading      = false
 
+            Game.removeFunction(id)
+
             reloadCB?.()
 
         }, this.weapon.stats.reload_time)
 
-        const id:  string = Game.generateID(),
-              ctx: CanvasRenderingContext2D = this.gameobj!.getCtx()
+
+        const id:    string = Game.generateID(),
+              odate: number = Date.now(),
+              ctx:   CanvasRenderingContext2D = this.gameobj!.getCtx()
 
         Game.addFunction(id, () => {
-            if (!this.weapon?.is_reloading)
-                Game.removeFunction(id) 
+            ctx.font = "12px Verdana, Geneva, Tahoma, sans-serif"
 
-            ctx.font = "14px Verdana, Geneva, Tahoma, sans-serif"
-
-            const text: string      = 'RELOADING',
-                  size: TextMetrics = ctx.measureText(text),
-                  posx: number      = this.x + (this.w - size.width) / 2
+            const textx: number = this.x + (this.w - ctx.measureText('RELOADING').width) / 2,
+                  barw:  number = ( (this.weapon!.stats.reload_time - (Date.now() - odate)) / this.weapon!.stats.reload_time ) * 80
 
             ctx.fillStyle = "white"
-            ctx.fillText(text, posx, this.y - 10)
+            ctx.fillText('RELOADING', textx, this.y - 20)
+
+            ctx.beginPath()
+            ctx.fillStyle = '#eee'
+            ctx.rect(this.x + (this.w - barw) / 2, this.y - 15, barw, 10)
+            ctx.fill()
         })
     }
 

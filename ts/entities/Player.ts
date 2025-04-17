@@ -1,6 +1,6 @@
 import Entity from "./Entity.js"
-import { ActionDefaults, Bullet, DamageObject, Effects, EntityStats, FlameWeapon, Maybe } from "../../interfaces/EntityTypes.js"
-import { CanvasStats, CollisionValues, KeysInput } from "../../interfaces/GameTypes.js"
+import { Bullet, DamageObject, Effects, EntityStats, FlameWeapon, Maybe, PlayerArgs } from "../../interfaces/EntityTypes.js"
+import { CanvasStats, CollisionValues, KeysInput, VoidFn } from "../../interfaces/GameTypes.js"
 import { Bindings, PlayerEq, PlayerSavedStats, PlayerStats } from "../../interfaces/PlayerTypes.js"
 import Item from "./Item.js"
 import Action from "./Action.js"
@@ -38,9 +38,9 @@ class Player extends Action
     private start_items:     PlayerEq
 
 
-    public constructor(x: number, y: number, w: number, h: number, speed: number, jumpPower: number, act_defaults: ActionDefaults)
+    public constructor(x: number, y: number, w: number, h: number, speed: number, jumpPower: number, args: PlayerArgs)
     {
-        super(x, y, w, h, {image: "/data/player/player.svg", act_defaults})
+        super(x, y, w, h, {image: "/data/player/player.svg", ...args})
 
         const saved: Maybe<PlayerSavedStats> = Game.storage_load('player_stats')
 
@@ -410,7 +410,7 @@ class Player extends Action
         return damage_result
     }
 
-    public override shoot(reloadCB?: () => void): boolean
+    public override shoot(reloadCB?: Maybe<VoidFn>): boolean
     {
         const shot: boolean = super.shoot(reloadCB)
 

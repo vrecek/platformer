@@ -71,11 +71,6 @@ let g_initPlayerPos: boolean      = false,
     player_stats:          PlayerSavedStats
 */
 
-/*
-    =TD=
-    reload indicator (bar)
-    enemy shoot when height is similar, ?and? if theres no obstacle
-*/
 
 const init = () => {
     if (GAME.insufficientScreenHandler())
@@ -95,7 +90,6 @@ const init = () => {
                 g_initPlayerPos = true
             }
     
-
             for (const ent of surfaces)
                 ent.draw(CTX, '#3a8cf3')
     
@@ -109,7 +103,7 @@ const init = () => {
                 if (shooter instanceof Enemy && shooter.isShooter())
                 {
                     shooter.displayHealth(CTX)
-                    shooter.shoot()
+                    shooter.shoot(null, PLAYER.getStats(), surfaces)
                 }
     
                 // Each bullet

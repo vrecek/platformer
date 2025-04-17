@@ -29,14 +29,31 @@ const getLevels = (game?: Game): Level[] => {
                     //     speed: 5,
                     //     paths: [[650, 360], [350, 360], [650, 360]]
                     // },
-                    act_defaults: {
+                    // act_defaults: {
                         direction: 'left',
                         game,
                         // weapon: new WeaponItem(0, 0, 'pistol', true).getWeaponStats(),
-                    }
+                    // }
+                }),
+                new Enemy(550, 460, 40, 40, {
+                    shoot: true,
+                    // animPath: {
+                    //     speed: 5,
+                    //     paths: [[650, 360], [350, 360], [650, 360]]
+                    // },
+                    // act_defaults: {
+                        direction: 'left',
+                        game,
+                        weapon: new WeaponItem(0, 0, 'rocketlauncher', true).getWeaponStats(),
+                    // }
                 }),
             ],
             surfaces: [
+                new Entity(150, 545, 40, 10),
+                new Entity(300, 500, 100, 10),
+                new Entity(320, 430, 40, 10),
+                new Entity(520, 500, 100, 10),
+                new Entity(460, 450, 10, 50),
                 // new Entity(150, 550, 40, 40),
                 // new Entity(350, 550, 40, 40),
                 // new Entity(150, 550, 40, 40),
