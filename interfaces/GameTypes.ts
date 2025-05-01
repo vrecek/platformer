@@ -2,6 +2,7 @@ import Ammo from "../ts/entities/Ammo"
 import Enemy from "../ts/entities/Enemy"
 import Entity from "../ts/entities/Entity"
 import Item from "../ts/entities/Item"
+import Obstacle from "../ts/entities/Obstacle"
 import Score from "../ts/entities/Score"
 import WeaponItem from "../ts/entities/WeaponItem"
 import Exit from "../ts/Exit"
@@ -30,6 +31,7 @@ export type Level = {
     image:     string
     exit:      Exit[]
     enemies:   Enemy[]
+    obstacles: Obstacle[]
     surfaces:  Entity[]
     scores:    Score[]
     weapons:   WeaponItem[]
@@ -51,6 +53,20 @@ export type AudioObject = {
 export type GameFunctions = {
     fn: VoidFn
     id: string
+}
+
+export type GameTimeouts = {
+    fn:       VoidFn
+    id:       string
+    timer:    number
+    timeleft: number
+    start:    number
+}
+
+export type GameDates = {
+    id:        string
+    val:       number
+    holdStart: number
 }
 
 export type Achievement = {

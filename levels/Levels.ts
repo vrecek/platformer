@@ -8,6 +8,7 @@ import WeaponItem from '../ts/entities/WeaponItem.js'
 import Ammo from '../ts/entities/Ammo.js'
 import Exit from '../ts/Exit.js'
 import Game from '../ts/Game.js'
+import Obstacle from '../ts/entities/Obstacle.js'
 
 
 const getLevels = (game?: Game): Level[] => {
@@ -22,30 +23,17 @@ const getLevels = (game?: Game): Level[] => {
             weapons: [
                 new WeaponItem(450, 540, 'machinegun')
             ],
+            obstacles: [
+                new Obstacle(650, 560, 40, 40),
+            ],
             enemies: [
-                new Enemy(650, 560, 40, 40, {
-                    shoot: true,
-                    // animPath: {
-                    //     speed: 5,
-                    //     paths: [[650, 360], [350, 360], [650, 360]]
-                    // },
-                    // act_defaults: {
-                        direction: 'left',
-                        game,
-                        // weapon: new WeaponItem(0, 0, 'pistol', true).getWeaponStats(),
-                    // }
-                }),
                 new Enemy(550, 460, 40, 40, {
-                    shoot: true,
                     // animPath: {
                     //     speed: 5,
                     //     paths: [[650, 360], [350, 360], [650, 360]]
                     // },
-                    // act_defaults: {
-                        direction: 'left',
-                        game,
-                        weapon: new WeaponItem(0, 0, 'rocketlauncher', true).getWeaponStats(),
-                    // }
+                    game,
+                    weapon: new WeaponItem(0, 0, 'pistol', true).getWeaponStats(),
                 }),
             ],
             surfaces: [
@@ -154,21 +142,21 @@ const getLevels = (game?: Game): Level[] => {
             weapons: [],
             exit: [new Exit(700, 550)],
             ammo: [],
-            enemies: [
-                new Enemy(0, 560, 800, 40),
-                new Enemy(285, 25, 20, 40, {
+            obstacles: [
+                new Obstacle(0, 560, 800, 40),
+                new Obstacle(285, 25, 20, 40, {
                     animPath: {
                         speed: 4,
                         paths: [[285,210]]
                     }
                 }),
-                new Enemy(500, 210, 20, 40, {
+                new Obstacle(500, 210, 20, 40, {
                     animPath: {
                         speed: 4,
                         paths: [[500, 25]]
                     }
                 }),
-                new Enemy(240, 270, 40, 20, {
+                new Obstacle(240, 270, 40, 20, {
                     animPath: {
                         speed: 4, 
                         interval_wait: 500,
@@ -176,6 +164,7 @@ const getLevels = (game?: Game): Level[] => {
                     }
                 }),
             ],
+            enemies: [],
             surfaces: [
                 new Entity(20, 80, 100, 20),
     

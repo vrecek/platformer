@@ -10,7 +10,7 @@ main.achievements-page {
         align-items: center;
 
         h1 {
-            font-size: 3rem;
+            font-size: 2.5rem;
             letter-spacing: 2px;
             font-weight: 800;
         }
@@ -18,7 +18,11 @@ main.achievements-page {
         h2 {
             letter-spacing: -1px;
             word-spacing: 6px;
-            font-weight: bold;
+            font-size: 1.1rem;
+
+            span {
+                font-weight: bold;
+            }
         }
     }
 

@@ -64,16 +64,47 @@ aside {
             }
         }
 
-        section.health {
-            p {
-                font-weight: bold;
-                font-size: 1.35rem;
+        section.statbar {
+            display: flex;
+            align-items: center;
+
+            figure {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: .25em;
+                border-radius: .25em;
+                width: 30px;
+                height: 30px;
+                margin-right: .5em;
+                background: rgb(58, 58, 92);
+                border: 2px solid #454F6B;
+
+                img {
+                    width: 100%;
+                }
             }
 
-            div.bar div { 
-                height: 25px;
-                background: rgb(48, 148, 48);
+            div.bar {
+                flex-grow: 1;
+                height: 30px;
+
+                div {
+                    position: relative;
+    
+                    p {
+                        position: absolute;
+                        left: .1em;
+                        top: 50%;
+                        translate: 0 -50%;
+                        font-weight: bold;
+                        font-size: 1rem;
+                    }
+                } 
             }
+
+            &.health div.bar div { background: rgb(48, 148, 48); }
+            &.armor div.bar div { background: rgb(21, 123, 191); }
         }
 
         section.effects section {

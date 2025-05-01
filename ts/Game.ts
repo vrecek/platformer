@@ -1,15 +1,18 @@
 import { Maybe } from "../interfaces/EntityTypes"
-import { Achievement, AudioObject, CanvasStats, CollisionValues, GameFunctions, Level, LevelLoader, VoidFn } from "../interfaces/GameTypes"
+import { Achievement, AudioObject, CanvasStats, CollisionValues, GameDates, GameFunctions, GameTimeouts, Level, LevelLoader, VoidFn } from "../interfaces/GameTypes"
 import Entity from "./entities/Entity"
 import Player from "./entities/Player"
 
 
 class Game
 {
-    private static fns:  GameFunctions[] = []
+    private static fns:   GameFunctions[] = []
+    private static tms:   GameTimeouts[]  = []
+    private static dates: GameDates[]     = []
 
-    private canvas:      HTMLCanvasElement
-    private ctx:         CanvasRenderingContext2D
+    private paused: boolean
+    private canvas: HTMLCanvasElement
+    private ctx:    CanvasRenderingContext2D
 
     private level:        number
     private levels:       Level[]
@@ -24,6 +27,7 @@ class Game
 
     public constructor(w?: number, h?: number, levels?: Level[])
     {
+        this.paused = false
         this.canvas = document.querySelector('canvas')!
         this.ctx    = this.canvas?.getContext('2d')!
 
@@ -146,6 +150,43 @@ class Game
         Game.fns.push({ id, fn })
     }
 
+    public static addTimer(fn: VoidFn, ms: number): number
+    {
+        const id: string = Game.generateID()
+
+        const timeoutFunction: VoidFn = () => {
+            fn()
+
+            Game.tms = Game.tms.filter(x => x.id !== id)
+        }
+
+        const timer: number = setTimeout(timeoutFunction, ms);
+
+
+        Game.tms.push({ timeleft: ms, fn: timeoutFunction, start: Date.now(), timer, id })
+        
+        return timer
+    }
+
+    public static getDynamicDate(id: string): number
+    {
+        const oldValue: Maybe<number> = this.dates.find(x => x.id === id)?.val
+
+        if (oldValue) 
+            return oldValue
+
+        const newValue: number = Date.now()
+
+        this.dates.push({ id, holdStart: 0, val: newValue })
+
+        return newValue
+    }
+
+    public static removeDynamicDate(id: string): void
+    {
+        this.dates = this.dates.filter(x => x.id !== id)
+    }
+
     public static storage_save(key: string, val: any): void
     {
         localStorage.setItem(key, JSON.stringify(val))
@@ -161,6 +202,41 @@ class Game
         key ? localStorage.removeItem(key) : localStorage.clear()
     }
 
+    
+
+    public pause(): void
+    {
+        this.paused = true
+
+        for (const x of Game.dates)
+            x.holdStart = Date.now()
+
+        for (const x of Game.tms)
+        {
+            clearTimeout(x.timer)
+
+            x.timeleft -= (Date.now() - x.start)
+        }
+    }
+
+    public resume(): void
+    {
+        this.paused = false
+
+        for (const x of Game.dates)
+            x.val += (Date.now() - x.holdStart)
+
+        for (const x of Game.tms)
+        {
+            x.start = Date.now()
+            x.timer = setTimeout(x.fn, x.timeleft)
+        }
+    }
+
+    public is_paused(): boolean
+    {
+        return this.paused
+    }
 
     public checkForAchievement(type: string, ...args: any): void
     {
@@ -171,12 +247,10 @@ class Game
         }
     }
 
-
     public getAllAchievements(): [Achievement[], Achievement[]]
     {
         return [this.achievements, this.achievements.filter(x => x.unlocked)]
     }
-
 
     public unlockAchievement(id: string): void 
     {
@@ -188,7 +262,6 @@ class Game
             this.popupAchievement(id)
         }
     }
-
 
     public popupAchievement(id: string): void
     {
@@ -222,7 +295,6 @@ class Game
         setTimeout(() => s1.remove(), 4000);
     }
 
-
     public isCollided(ent: Entity): CollisionValues[]
     {
         const cw = this.canvas.width,
@@ -239,13 +311,11 @@ class Game
         return vals
     }
 
-
     public setWidth(w: number, h: number): void
     {
         this.canvas.width  = w
         this.canvas.height = h
     }
-
 
     public insufficientScreenHandler(): boolean
     {
@@ -285,7 +355,6 @@ class Game
         return false
     }
 
-
     public audio(path: string): void
     {
         if (!path) return
@@ -308,12 +377,10 @@ class Game
         a.play()
     }
 
-
     public is_audio_playing(path: string): boolean
     {
         return this.audios.some(x => x.path === path)
     }
-
 
     public stop_audio(path: string): void
     {
@@ -327,7 +394,6 @@ class Game
         }
     }
 
-
     public toggleAudio(): boolean
     {
         this.muted = !this.muted
@@ -340,9 +406,10 @@ class Game
         return this.muted
     }
 
-
     public unlockLevel(lvl: number): void
     {
+        lvl--
+
         let lvls: number[] = Game.storage_load('unlocked_lvl')
 
         if (!lvls)
@@ -351,8 +418,6 @@ class Game
             lvls[0] = 1
         }
 
-        lvl--
-
         if (lvl >= lvls.length || lvls[lvl])
             return
 
@@ -360,7 +425,6 @@ class Game
 
         Game.storage_save('unlocked_lvl', lvls)
     }
-
 
     public update(fn: VoidFn): void
     {
@@ -375,7 +439,6 @@ class Game
         window.requestAnimationFrame(refresh)
     }
 
-
     public updateScoreText(points?: number): void
     {
         const lvl    = document.querySelector('h1')!,
@@ -388,12 +451,10 @@ class Game
         scores.textContent = `Score: ${this.points}/${this.totalPoints}`
     }
 
-
     public havePointsBeenCollected(): boolean
     {
         return this.points === this.totalPoints
     }
-
 
     public loadLevel(type: LevelLoader | number): Level | null
     {
@@ -424,25 +485,21 @@ class Game
         return newLevel ? Object.assign(Object.create(Object.getPrototypeOf(newLevel)), newLevel) : null
     }
 
-
     public setLevels(levels: Level[]): void
     {
         this.levels = levels
         this.level  = 1
     }
 
-
     public getCurrentLevel(): number
     {
         return this.level
     }
 
-
     public getCtx(): CanvasRenderingContext2D
     {
         return this.ctx
     }
-
 
     public getCanvasStats(): CanvasStats
     {

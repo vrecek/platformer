@@ -7,13 +7,12 @@ export type OptionalArgs = {
     color?:        Maybe
     image?:        Maybe
     animPath?:     Maybe<AnimationArg>
-    // act_defaults?: Maybe<ActionDefaults> 
 }
 
 export type ShootDirection = 'left' | 'right'
 
 export type EnemyArgs = ActionArgs & {
-    shoot?: boolean
+    weapon: Weapon
 }
 
 export type EntityPos = {
@@ -22,18 +21,24 @@ export type EntityPos = {
 }
 
 export type PlayerArgs = {
-    weapon?:    Weapon
-    health?:    number
-    godmode?:   boolean
-    game?:      Maybe<Game>
+    weapon?:     Weapon
+    health?:     number
+    armor?:      number
+    armor_prot?: number
+    armor_max?:  number
+    godmode?:    boolean
+    game?:       Maybe<Game>
 }
 
 export type ActionArgs = OptionalArgs & {
-    weapon?:    Weapon
-    health?:    number
-    direction?: ShootDirection
-    godmode?:   boolean
-    game?:      Maybe<Game>
+    weapon?:     Weapon
+    health?:     number
+    armor?:      number
+    armor_max?:  number
+    armor_prot?: number
+    direction?:  ShootDirection
+    godmode?:    boolean
+    game?:       Maybe<Game>
 }
 
 export type EntityStats = {
@@ -94,7 +99,7 @@ export type Bullet = {
 export type ExplosionBulletObject = {
     sizeStep: number
     affected: string[]
-    timeout?: number
+    timeout?: Maybe< number>
 }
 
 export type FlameBulletObject = {

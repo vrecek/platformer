@@ -22,7 +22,7 @@ class Entity
     {
         this.id    = Math.random().toString().slice(2)
         this.name  = args?.name
-        this.color = args?.color
+        this.color = args?.color ?? '#3a8cf3'
 
         this.collisions = []
 

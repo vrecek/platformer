@@ -68,7 +68,7 @@ class Player extends Action
         this.friction       = .925
 
         this.curr_items  = new Array(6).fill(null)
-        this.start_items = [...this.items]
+        this.start_items = [...this.curr_items]
 
         this.blockedKeys    = new Set<string>()
         this.movementStatus = true
@@ -435,7 +435,7 @@ class Player extends Action
             b.obj.setPosition(x - sizeStep/2, y - sizeStep/2)
 
             if (!timeout)
-                b.explosionObj.timeout = setTimeout(() => this.removeBullet(b.obj, true), 200)
+                b.explosionObj.timeout = Game.addTimer(() => this.removeBullet(b.obj, true), 200)
         }
         else if (b.type === 'flamestream')
         {
@@ -464,13 +464,6 @@ class Player extends Action
         }
         else
         {
-            // b.ang!+=.05
-            // const xr = this.x + this.w / 2
-            // const xy = this.y + this.h / 2
-
-            // const x1 = xr + b.rad! * Math.cos(b.ang!) - 20/2; // X position based on the angle
-            // const y1 = xy + b.rad! * Math.sin(b.ang!) - 10/2;
-            // b.obj.setPosition(x1,y1)
             b.obj.setPosition(
                 x + (b.dir * b.dirX) * this.weapon!.stats.bullet_speed, 
                 y + b.dirY * this.weapon!.stats.bullet_speed

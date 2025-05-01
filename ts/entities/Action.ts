@@ -20,7 +20,11 @@ abstract class Action extends Entity
     protected gameobj: Maybe<Game>
 
     protected health:     number
-    protected def_health: number
+    protected max_health: number
+    protected armor:      number
+    protected max_armor:  number
+    protected armor_prot: number
+
     protected last_dir:   ShootDirection
     
 
@@ -45,13 +49,13 @@ abstract class Action extends Entity
     private singleBullet(x: number, img: string, dir: BulletDirection): void
     {
         const dg  = this.weapon!.stats.angle,
-              ang = Game.degToRad(Math.random() * (dg - -dg) + -dg)
+              ang = Game.degToRad(Math.random() * (dg*2) - dg)
 
         const obj: Entity = new Entity(x, this.y, 20, 10, {image: img})
 
         this.shots.push({obj, dir, dirX: Math.cos(ang), dirY: Math.sin(ang), type: 'regular'})
         
-        setTimeout(() => this.removeBullet(obj), this.bullet_lifetime)
+        Game.addTimer(() => this.removeBullet(obj), this.bullet_lifetime)
     }
 
     private shotgunBullet(x: number, img: string, dir: BulletDirection): void
@@ -70,7 +74,7 @@ abstract class Action extends Entity
 
             this.shots.push({obj, dir, dirX: Math.cos(angle), dirY: Math.sin(angle), type: 'regular' })
 
-            setTimeout(() => this.removeBullet(obj), this.bullet_lifetime)
+            Game.addTimer(() => this.removeBullet(obj), this.bullet_lifetime)
         }
     }
 
@@ -80,7 +84,7 @@ abstract class Action extends Entity
 
         this.shots.push({obj, dir, dirX: 1, dirY: Math.sin(Game.degToRad(this.weapon!.stats.angle)), type: 'explosive'})
         
-        setTimeout(() => this.removeBullet(obj), this.bullet_lifetime)
+        Game.addTimer(() => this.removeBullet(obj), this.bullet_lifetime)
     }
 
     private flamethrowerBullet(x: number, img: string, dir: BulletDirection): void
@@ -120,10 +124,13 @@ abstract class Action extends Entity
 
         this.has_shot   = false
         this.shots      = []
-        this.last_dir   = args?.direction ?? 'right'
+        this.last_dir   = args?.direction ?? 'left'
 
         this.health     = args?.health ?? 100
-        this.def_health = this.health
+        this.max_health = this.health
+        this.armor      = args?.armor ?? 0
+        this.max_armor  = args?.armor_max ?? this.armor
+        this.armor_prot = args?.armor_prot ?? 0
         this.godmode    = args?.godmode ?? false
 
         this.bullet_lifetime = 2000
@@ -167,7 +174,7 @@ abstract class Action extends Entity
 
 
         this.has_shot = true
-        setTimeout(() => this.has_shot = false, this.weapon.stats.shoot_cd)
+        Game.addTimer(() => this.has_shot = false, this.weapon.stats.shoot_cd)
 
 
         if (!this.gameobj?.is_audio_playing('/data/weapons/sounds/fire.wav'))
@@ -189,8 +196,33 @@ abstract class Action extends Entity
             b.obj.setPosition(x - sizeStep/2, y - sizeStep/2)
 
             if (!timeout)
-                b.explosionObj.timeout = setTimeout(() => this.removeBullet(b.obj, true), 200)
+                b.explosionObj.timeout = Game.addTimer(() => this.removeBullet(b.obj, true), 200)
         }
+        // else if (b.type === 'flamestream')
+        // {
+        //     const gun:   FlameWeapon = this.weapon!.stats as FlameWeapon,
+        //             new_w: number      = w - gun.flamestep
+
+        //     let leftshrink: number = 0                  
+
+        //     if (!this.checkBinding('player_shoot') || !this.weapon?.stats.mag_ammo) // <-- checkBinding for universal
+        //     {
+        //         leftshrink = gun.flamestep
+
+        //         b.obj.setSize(new_w)
+
+        //         if (new_w <= gun.flamestep)
+        //         {
+        //             this.removeBullet(b.obj)
+        //             this.gameobj?.stop_audio('/data/weapons/sounds/fire.wav')
+        //         }
+        //     }
+
+        //     if (b.dir === -1)
+        //         b.obj.setPosition(this.x - new_w - gun.flamestep - 2 + leftshrink , this.y)
+        //     else
+        //         b.obj.setPosition(this.x + this.w + 2, this.y)
+        // }
         else
         {
             b.obj.setPosition(
@@ -221,7 +253,7 @@ abstract class Action extends Entity
         this.weapon.is_reloading = true
         this.gameobj?.audio?.('/data/weapons/sounds/reload.wav')
 
-        this.reload_timer = setTimeout(() => {
+        this.reload_timer = Game.addTimer(() => {
             if (!this.weapon || !this.weapon.is_reloading) return
 
             let missing: number = this.weapon_def!.stats.mag_ammo - this.weapon.stats.mag_ammo,
@@ -238,21 +270,22 @@ abstract class Action extends Entity
             this.weapon.is_reloading      = false
 
             Game.removeFunction(id)
+            Game.removeDynamicDate('reload')
 
             reloadCB?.()
 
         }, this.weapon.stats.reload_time)
 
 
-        const id:    string = Game.generateID(),
-              odate: number = Date.now(),
-              ctx:   CanvasRenderingContext2D = this.gameobj!.getCtx()
+        const id:  string = Game.generateID(),
+              ctx: CanvasRenderingContext2D = this.gameobj!.getCtx()
 
         Game.addFunction(id, () => {
             ctx.font = "12px Verdana, Geneva, Tahoma, sans-serif"
 
-            const textx: number = this.x + (this.w - ctx.measureText('RELOADING').width) / 2,
-                  barw:  number = ( (this.weapon!.stats.reload_time - (Date.now() - odate)) / this.weapon!.stats.reload_time ) * 80
+            const delta: number = Date.now() - Game.getDynamicDate('reload'),
+                  textx: number = this.x + (this.w - ctx.measureText('RELOADING').width) / 2,
+                  barw:  number = ( (this.weapon!.stats.reload_time - delta) / this.weapon!.stats.reload_time ) * 80
 
             ctx.fillStyle = "white"
             ctx.fillText('RELOADING', textx, this.y - 20)
@@ -279,7 +312,7 @@ abstract class Action extends Entity
               w_def:   number = 80,
               y:       number = this.y - h - 5,
               center:  number = this.x + (this.w - w_def) / 2,
-              healthv: number = (w_def * this.health) / this.def_health,
+              healthv: number = (w_def * this.health) / this.max_health,
               healthx: number = this.x + (this.w - healthv) / 2
 
 
@@ -309,7 +342,7 @@ abstract class Action extends Entity
         ctx.fillText(`${dmg}`, x, y)
 
         Game.addFunction(id, () => {
-            setTimeout(() => Game.removeFunction(id), 1000)
+            Game.addTimer(() => Game.removeFunction(id), 1000)
 
             ctx.font = "16px Verdana, Geneva, Tahoma, sans-serif"
             ctx.fillStyle = 'white'
@@ -339,7 +372,7 @@ abstract class Action extends Entity
 
             bullet.flameObj.affected.push(target.id)
 
-            setTimeout(() => {
+            Game.addTimer(() => {
                 if (!bullet.flameObj) return
 
                 const i: number = bullet.flameObj.affected.findIndex(x => x === target.id)
@@ -350,10 +383,18 @@ abstract class Action extends Entity
             }, bullet.flameObj.dmg_cooldown);
         }
 
-        target.health -= this.weapon!.stats.bullet_dmg
+
+        const prot_percent: number = target.armor_prot * 0.01,
+              weapon_dmg:   number = Math.floor(this.weapon!.stats.bullet_dmg * prot_percent),
+              armor_deal:   number = target.armor !== -1 ? Math.min(target.armor, weapon_dmg) : weapon_dmg,
+              health_deal:  number = this.weapon!.stats.bullet_dmg - armor_deal
+
+
+        target.health -= health_deal
+        target.armor  -= target.armor !== -1 ? armor_deal : 0
 
         return {
-            dmgdealt: this.weapon!.stats.bullet_dmg,
+            dmgdealt: health_deal,
             killed:   target.health <= 0
         }
     }
@@ -381,7 +422,8 @@ abstract class Action extends Entity
 
                 this.shots.push({obj, dir: 1, dirX: 0, dirY: 0, type: 'explosion', explosionObj: {
                     sizeStep: 8,
-                    affected: []
+                    affected: [],
+                    timeout: null
                 }})
             }
 
@@ -397,10 +439,19 @@ abstract class Action extends Entity
     }
 
 
+    public isShooter(): boolean
+    {
+        return !!this.weapon
+    }
+
+
     public loadWeapon(): void
     {
         if (this.weapon_saved)
-            this.weapon = this.weapon_copy(this.weapon_saved)
+        {
+            this.weapon     = this.weapon_copy(this.weapon_saved)
+            this.weapon_def = this.weapon_copy(this.weapon_saved)
+        }
     }
 
 
@@ -441,7 +492,9 @@ abstract class Action extends Entity
         return {
             ...super.getStats(),
             health:     this.health,
-            def_health: this.def_health,
+            max_health: this.max_health,
+            armor:      this.armor,
+            max_armor:  this.max_armor,
             godmode:    this.godmode
         }
     }

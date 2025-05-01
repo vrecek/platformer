@@ -15,6 +15,7 @@ section.main-wrap {
         }
 
         main {
+            flex-grow: 1;
             display: flex;
             height: 100%;
             align-content: center;
@@ -78,7 +79,9 @@ section.main-wrap {
             margin: 0;
             right: 1em;
             top: 1em;
-            width: 10%;
+            width: max-content;
+            padding: .75em;
+            font-size: .95rem;
             background: rgb(195, 29, 29);
 
             &:hover { background: rgb(168, 25, 25); }

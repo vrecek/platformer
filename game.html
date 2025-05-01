@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="css/game.css">
     <link rel="stylesheet" href="css/lost.css">
     <link rel="stylesheet" href="css/aside.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
     <script type="module" src="js/ts/index.js" defer></script>
     <title>Platformer</title>
 </head>
@@ -96,9 +97,14 @@
                 </section>
             </section>
 
-            <section class="health">
-                <p>100</p>
-                <div class="bar"><div></div></div>
+            <section class="health statbar">
+                <figure><img src="/data/hearticon.svg"></figure>
+                <div class="bar"><div><p></p></div></div>
+            </section>
+
+            <section class="armor statbar">
+                <figure><img src="/data/shieldicon.svg"></figure>
+                <div class="bar"><div><p></p></div></div>
             </section>
 
         </aside>
@@ -125,8 +131,8 @@
             <img class="sound-icon" src="/data/sound_off.svg">
 
             <section class="menu">
-                <button>Load game</button>
-                <button>Save game</button>
+                <button class="btn-load">Load game</button>
+                <button class="btn-save">Save game</button>
                 <a class="btn" href="/index.html">Main menu</a>
             </section>
 

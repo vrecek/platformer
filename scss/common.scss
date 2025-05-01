@@ -31,3 +31,99 @@ body {
         &:hover { background: darken(rgb(65, 75, 103), 2%); }
     }
 }
+
+section.ls-menu-section {
+    p.header-info {
+        text-transform: uppercase;
+        font-weight: 800;
+        font-size: 1.25rem;
+        letter-spacing: -1px;
+    }
+
+    section.container {
+        margin: 2em 0;
+        padding: 1em;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+
+        &:has(section.active) {
+            section:not(.active) {
+                opacity: .5;
+            }
+        }
+
+        section {
+            margin: .25em;
+            width: 30%;
+            aspect-ratio: 1;
+            background: #323251;
+            cursor: pointer;     
+            
+            &.empty {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                text-transform: uppercase;
+                font-weight: 600;
+                font-size: .95rem;
+                color: #aaa;
+                letter-spacing: -1px;
+            }
+
+            &.content {
+                padding: .5em;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+
+                p {
+                    letter-spacing: -1px;
+                }
+
+                p.title {
+                    text-align: center;
+                    font-size: 1.1rem;
+                }
+
+                div p {
+                    font-size: .95rem;
+                }
+            }
+
+            &.active {
+                pointer-events: none;
+            }
+        }
+    }
+
+    section.buttons {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        
+        section {
+            display: flex;
+        }
+    }
+
+    i {
+        width: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        aspect-ratio: 1;
+        font-size: 1.75rem;
+        border-radius: .25em;
+        cursor: pointer;
+
+        &.delete { background: rgb(223, 25, 25); margin-left: .25em;}
+        &.load, &.save { background: rgb(19, 177, 19);}
+        &.back { background: rgb(25, 121, 223);}
+
+        &.off {
+            pointer-events: none;
+            opacity: .25;
+        }
+    }
+}

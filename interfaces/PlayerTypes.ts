@@ -19,7 +19,9 @@ export type PlayerStats = ActionStats & {
 
 export type ActionStats = EntityStats & {
     health:     number
-    def_health: number
+    max_health: number
+    armor:      number
+    max_armor:  number
     godmode:    boolean
 }
 

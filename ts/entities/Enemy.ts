@@ -7,22 +7,28 @@ import Entity from "./Entity.js";
 
 class Enemy extends Action
 {
-    private shooter:     boolean
     private allow_shoot: boolean
 
 
-    public constructor(x: number, y: number, w: number, h: number, args?: Maybe<EnemyArgs>)
+    private set_shooter_image(): void
     {
-        super(x, y, w, h, {...args, color: '#e73737'})
+        this.setImage(`/data/enemies/${this.weapon!.type}/enemy_${this.weapon!.type}_${this.last_dir}.svg`)
+    }
+
+
+    public constructor(x: number, y: number, w: number, h: number, args: EnemyArgs)
+    {
+        super(x, y, w, h, {...args, color: '#e73737', armor: -1})
 
         this.allow_shoot = true
-        this.shooter     = args?.shoot ?? false
+
+        this.set_shooter_image()
     }
 
 
     public override shoot(_?: Maybe<VoidFn>, plr?: PlayerStats, surfaces?: Entity[]): boolean
     {
-        if (this.shooter && this.allow_shoot && plr)
+        if (this.weapon && this.allow_shoot && plr)
         { 
             const blocked: boolean = surfaces!.some(e => {
                 const s: EntityStats = e.getStats()
@@ -41,16 +47,16 @@ class Enemy extends Action
                 plr.y <= this.y &&
                 !blocked
             )
+            {
+                this.last_dir = plr.x < this.x ? 'left' : 'right'
+
+                this.set_shooter_image()
+
                 return super.shoot()
+            }
         }
         
         return false
-    }
-
-
-    public isShooter(): boolean
-    {
-        return this.shooter
     }
 
 
