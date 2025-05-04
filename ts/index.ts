@@ -46,14 +46,15 @@ const DEFAULT_SPEED: number = 3,
 // -------------------- ENTITIES --------------------------
 
 const PLAYER: Player = new Player(210, 30, 40, 40, DEFAULT_SPEED, DEFAULT_JUMP, {
-    weapon: new WeaponItem(0, 0, 'rocketlauncher').getWeaponStats(),
+    // weapon: new WeaponItem(0, 0, 'rocketlauncher').getWeaponStats(),
     // weapon: new WeaponItem(0, 0, 'smg').getWeaponStats(),
-    // weapon: new WeaponItem(0, 0, 'flamethrower').getWeaponStats(),
+    weapon: new WeaponItem(0, 0, 'flamethrower').getWeaponStats(),
     // weapon: new WeaponItem(0, 0, 'shotgun').getWeaponStats(),
     // weapon: new WeaponItem(0, 0, 'machinegun').getWeaponStats(),
     // weapon: new WeaponItem(0, 0, 'pistol').getWeaponStats(),
     game: GAME,
     health: 100,
+    // godmode: true,
     armor: 5,
     armor_max: 100,
     armor_prot: 20
@@ -83,7 +84,6 @@ let g_item_toggle:  boolean      = true,
     load/save 
     npc dialog
     change button to square-icon
-    cleanup player override drawShot()
 
     SAVE/LOAD
     Player: x,y,curr_items,weapon,health,armor,armor_prot,armor_max
@@ -125,7 +125,7 @@ const init = () => {
             if (shooter instanceof Enemy && shooter.isShooter())
             {
                 shooter.displayHealth(CTX)
-                shooter.shoot(null, PLAYER.getStats(), surfaces)
+                shooter.shoot_smart(PLAYER.getStats(), surfaces)
             }
 
             // Each bullet
@@ -146,7 +146,7 @@ const init = () => {
                     bullet.obj.checkCollision<Player>([PLAYER], (player: Player) => {
                         const dmg: DamageObject = shooter.deal_damage(player, bullet)
 
-                        shooter.removeBullet(bullet.obj)
+                        bulletCollision(shooter, bullet)
                         
                         if (dmg.dmgdealt)
                             player.displayDamage(CTX, dmg.dmgdealt)
@@ -156,16 +156,18 @@ const init = () => {
                 else if (shooter instanceof Player)
                 {
                     // Player bullet
-                    bullet.obj.checkCollision<Obstacle>(obstacles, () => {
-                        shooter.removeBullet(bullet.obj)
-                    })
+                    if (PLAYER.getWeapon()?.type !== 'flamethrower')
+                    {
+                        bullet.obj.checkCollision<Obstacle>(obstacles, () => {
+                            shooter.removeBullet(bullet.obj)
+                        })
+                    }
 
                     bullet.obj.checkCollision<Action>([...enemies, PLAYER], (enemy: Action) => {
                         const dmg: DamageObject = shooter.deal_damage(enemy, bullet)
 
 
-                        if (bullet.type !== 'flamestream')
-                            shooter.removeBullet(bullet.obj)
+                        bulletCollision(shooter, bullet)
 
                         if (dmg.dmgdealt)
                             enemy.displayDamage(CTX, dmg.dmgdealt)
@@ -215,7 +217,7 @@ const init = () => {
     PLAYER.addBinding('item_scroll-backwards', ['q'], () => activeItemSelector(true))
     PLAYER.addBinding('item_scroll-forwards',  ['e'], () => activeItemSelector())
     PLAYER.addBinding('item_drop',             ['z'], () => itemDrop())
-    PLAYER.addBinding('player_shoot',          ['x'], () => playerShoot())
+    PLAYER.addBinding('entity_shoot',          ['x'], () => playerShoot())
     PLAYER.addBinding('reload_weapon',         ['r'], () => PLAYER.reload(displayAmmo))
 
     PLAYER.addBinding('item_use', ['f'], () => {
@@ -237,7 +239,7 @@ const init = () => {
             displayItems()
         }
     })
-    
+
     displayWeapon()
     displayAmmo()
 }

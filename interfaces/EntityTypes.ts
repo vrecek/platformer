@@ -1,5 +1,6 @@
 import Entity from "../ts/entities/Entity"
 import Game from "../ts/Game"
+import { Bindings } from "./PlayerTypes"
 
 
 export type OptionalArgs = {
@@ -39,6 +40,7 @@ export type ActionArgs = OptionalArgs & {
     direction?:  ShootDirection
     godmode?:    boolean
     game?:       Maybe<Game>
+    bindings?:   Bindings
 }
 
 export type EntityStats = {
@@ -87,13 +89,13 @@ export type Pos = {
 }
 
 export type Bullet = {
-    obj:           Entity
-    type:          BulletType
-    dir:           BulletDirection
-    dirX:          number
-    dirY:          number
-    explosionObj?: ExplosionBulletObject
-    flameObj?:     FlameBulletObject
+    obj:             Entity
+    type:            BulletType
+    dir:             BulletDirection
+    dirX:            number
+    dirY:            number
+    explosionObj?:   ExplosionBulletObject
+    flame_affected?: string[]
 }
 
 export type ExplosionBulletObject = {
@@ -138,8 +140,9 @@ export type ShotgunWeapon = WeaponCommon & {
 }
 
 export type FlameWeapon = WeaponCommon & {
-    maxflame:  number
-    flamestep: number
+    maxflame:     number
+    flamestep:    number
+    dmg_cooldown: number
 }
 
 export type WeaponStats = PistolWeapon | ShotgunWeapon | FlameWeapon

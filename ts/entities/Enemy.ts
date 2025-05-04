@@ -1,5 +1,4 @@
-import { EnemyArgs, EntityStats, Maybe } from "../../interfaces/EntityTypes.js";
-import { VoidFn } from "../../interfaces/GameTypes.js";
+import { EnemyArgs, EntityStats, Maybe, ShootDirection } from "../../interfaces/EntityTypes.js";
 import { PlayerStats } from "../../interfaces/PlayerTypes.js";
 import Action from "./Action.js";
 import Entity from "./Entity.js";
@@ -9,7 +8,7 @@ class Enemy extends Action
 {
     private allow_shoot: boolean
 
-
+    // flamethrwoer iamge
     private set_shooter_image(): void
     {
         this.setImage(`/data/enemies/${this.weapon!.type}/enemy_${this.weapon!.type}_${this.last_dir}.svg`)
@@ -23,10 +22,11 @@ class Enemy extends Action
         this.allow_shoot = true
 
         this.set_shooter_image()
+        this.addBinding('entity_shoot', ['flame'], () => {})
     }
 
 
-    public override shoot(_?: Maybe<VoidFn>, plr?: PlayerStats, surfaces?: Entity[]): boolean
+    public shoot_smart(plr: PlayerStats, surfaces: Entity[]): boolean
     {
         if (this.weapon && this.allow_shoot && plr)
         { 
@@ -48,13 +48,25 @@ class Enemy extends Action
                 !blocked
             )
             {
-                this.last_dir = plr.x < this.x ? 'left' : 'right'
+                const new_dir: ShootDirection = plr.x < this.x ? 'left' : 'right'
+
+                if (this.hasShotBullet('flamestream') && this.last_dir !== new_dir)
+                {
+                    this.removeKey('flame')
+
+                    return false
+                }
+
+                this.last_dir = new_dir
 
                 this.set_shooter_image()
-
+                this.addKey('flame')
+                
                 return super.shoot()
             }
         }
+        
+        this.removeKey('flame')
         
         return false
     }

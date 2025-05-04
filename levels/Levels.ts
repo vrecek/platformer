@@ -21,7 +21,7 @@ const getLevels = (game?: Game): Level[] => {
                 new Ammo(520, 570)
             ],
             weapons: [
-                new WeaponItem(450, 540, 'machinegun')
+                new WeaponItem(450, 540, 'flamethrower')
             ],
             obstacles: [
                 new Obstacle(650, 560, 40, 40),
@@ -33,7 +33,7 @@ const getLevels = (game?: Game): Level[] => {
                     //     paths: [[650, 360], [350, 360], [650, 360]]
                     // },
                     game,
-                    weapon: new WeaponItem(0, 0, 'pistol', true).getWeaponStats(),
+                    weapon: new WeaponItem(0, 0, 'flamethrower', true).getWeaponStats(),
                 }),
             ],
             surfaces: [

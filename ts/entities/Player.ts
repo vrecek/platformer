@@ -10,10 +10,7 @@ import Game from "../Game.js"
 
 class Player extends Action
 { 
-    private keys:            KeysInput
     private blockedKeys:     Set<string>
-    private bindings:        Bindings
-    private flat_bindings:   string[]
     private movementStatus:  boolean
     private activeEffects:   string[]  
     private activeItems:     Item[] 
@@ -40,7 +37,11 @@ class Player extends Action
 
     public constructor(x: number, y: number, w: number, h: number, speed: number, jumpPower: number, args: PlayerArgs)
     {
-        super(x, y, w, h, {image: "/data/player/player.svg", ...args})
+        super(x, y, w, h, {image: "/data/player/player.svg", ...args, bindings: {
+            jump:  { keys: ['w', ' ', 'ArrowUp'], fn: ()=>{ (!this.isJumping && !this.isFalling) && this.jump() } },
+            left:  { keys: ['a', 'ArrowLeft'],    fn: ()=>{ this.x -= this.speedx; this.last_dir = 'left' } },
+            right: { keys: ['d', 'ArrowRight'],   fn: ()=>{ this.x += this.speedx; this.last_dir = 'right' } },
+        }})
 
         const saved: Maybe<PlayerSavedStats> = Game.storage_load('player_stats')
 
@@ -75,20 +76,8 @@ class Player extends Action
         this.activeEffects  = []
         this.activeItems    = []
 
-        this.bindings = {
-            jump:  { keys: ['w', ' ', 'ArrowUp'], fn: ()=>{ (!this.isJumping && !this.isFalling) && this.jump() } },
-            left:  { keys: ['a', 'ArrowLeft'],    fn: ()=>{ this.x -= this.speedx; this.last_dir = 'left' } },
-            right: { keys: ['d', 'ArrowRight'],   fn: ()=>{ this.x += this.speedx; this.last_dir = 'right' } },
-        }
-        this.flat_bindings = Object.values(this.bindings).map(x => x.keys).flat()
-
         this.speedx    = speed
         this.jumpPower = jumpPower
-
-        this.keys = {
-            pressed: false,
-            pressedKeys: []
-        }
     }
 
 
@@ -116,9 +105,9 @@ class Player extends Action
     private checkMovementCondition(): boolean 
     {
         if (
-            !this.keys.pressed ||
+            !this.isKeyPressed() ||
             !this.movementStatus ||
-            (this.blockedKeys.size && [...this.blockedKeys].some(x => this.keys.pressedKeys.includes(x)))
+            (this.blockedKeys.size && [...this.blockedKeys].some(x => this.isKeyPressed(x)))
         )
             return true
 
@@ -126,14 +115,9 @@ class Player extends Action
         return false
     }
 
-    private checkBinding(action: string): boolean 
-    {
-        return this.keys.pressedKeys.some(x => this.bindings[action].keys.includes(x))
-    }
-
     private blockAction(action: string): void
     {
-        for (const x of this.bindings[action].keys)
+        for (const x of this.getBindings()[action].keys)
             this.blockedKeys.add(x)
     }
 
@@ -327,38 +311,15 @@ class Player extends Action
     // ----------------- KEY HANDLERS --------------------
     // ---------------------------------------------------
 
-    public addBinding(action: string, keys: string[], fn: ()=>void): void
-    {
-        this.bindings[action] = { keys, fn }
-        this.flat_bindings    = Object.values(this.bindings).map(x => x.keys).flat()
-    }
-
     public resetBlockedKeys(): void 
     {
         this.blockedKeys.clear()
     }
 
-    public addKey(key: string): void
-    {
-        if (!this.flat_bindings.includes(key) || this.keys.pressedKeys.includes(key))
-            return
-
-        this.keys.pressed = true
-        this.keys.pressedKeys.push(key)
-    }
-
-    public removeKey(key: string): void
-    {
-        this.keys.pressedKeys.splice(this.keys.pressedKeys.indexOf(key), 1)
-
-        if (!this.keys.pressedKeys.length)
-            this.keys.pressed = false
-    }
-
     public initPressKeyEvents(): void 
     {
         window.addEventListener('keydown', ({key}) => this.addKey(key))
-        window.addEventListener('keyup', ({key}) => this.removeKey(key))
+        window.addEventListener('keyup',   ({key}) => this.removeKey(key))
     }
 
     public handleStandardMoveKeys(): void 
@@ -367,16 +328,16 @@ class Player extends Action
             return
 
 
-        if (this.keys.pressedKeys.includes('w'))
+        if (this.isKeyPressed('w'))
             this.y -= this.speedx
 
-        if (this.keys.pressedKeys.includes('a'))
+        if (this.isKeyPressed('a'))
             this.x -= this.speedx
 
-        if (this.keys.pressedKeys.includes('s'))
+        if (this.isKeyPressed('s'))
             this.y += this.speedx
 
-        if (this.keys.pressedKeys.includes('d'))
+        if (this.isKeyPressed('d'))
             this.x += this.speedx
     }
 
@@ -387,10 +348,10 @@ class Player extends Action
         if (this.checkMovementCondition())
             return
 
-        for (const x in this.bindings)
+        for (const x in this.getBindings())
         {
             if (this.checkBinding(x))
-                this.bindings[x].fn()
+                this.getBindings()[x].fn()
         }
     }
 
@@ -421,56 +382,6 @@ class Player extends Action
         }
         
         return shot
-    }
-
-    public override drawShot(CTX: CanvasRenderingContext2D, b: Bullet)
-    {
-        const {x, y, w, h} = b.obj.getStats()
-
-        if (b.explosionObj)
-        {
-            const {sizeStep, timeout} = b.explosionObj
-
-            b.obj.setSize(w + sizeStep, h + sizeStep)
-            b.obj.setPosition(x - sizeStep/2, y - sizeStep/2)
-
-            if (!timeout)
-                b.explosionObj.timeout = Game.addTimer(() => this.removeBullet(b.obj, true), 200)
-        }
-        else if (b.type === 'flamestream')
-        {
-            const gun:   FlameWeapon = this.weapon!.stats as FlameWeapon,
-                  new_w: number      = w - gun.flamestep
-
-            let leftshrink: number = 0                  
-
-            if (!this.checkBinding('player_shoot') || !this.weapon?.stats.mag_ammo)
-            {
-                leftshrink = gun.flamestep
-
-                b.obj.setSize(new_w)
-
-                if (new_w <= gun.flamestep)
-                {
-                    this.removeBullet(b.obj)
-                    this.gameobj?.stop_audio('/data/weapons/sounds/fire.wav')
-                }
-            }
-
-            if (b.dir === -1)
-                b.obj.setPosition(this.x - new_w - gun.flamestep - 2 + leftshrink , this.y)
-            else
-                b.obj.setPosition(this.x + this.w + 2, this.y)
-        }
-        else
-        {
-            b.obj.setPosition(
-                x + (b.dir * b.dirX) * this.weapon!.stats.bullet_speed, 
-                y + b.dirY * this.weapon!.stats.bullet_speed
-            )
-        }
-
-        b.obj.draw(CTX)
     }
 
     // ---------------------------------------------------

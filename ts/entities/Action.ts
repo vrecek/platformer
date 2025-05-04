@@ -1,6 +1,6 @@
 import { ActionArgs, Bullet, BulletDirection, DamageObject, EntityStats, FlameWeapon, Maybe, ShootDirection, ShotgunWeapon, Weapon, WeaponStat } from "../../interfaces/EntityTypes.js";
-import { VoidFn } from "../../interfaces/GameTypes.js";
-import { ActionStats } from "../../interfaces/PlayerTypes.js";
+import { KeysInput, VoidFn } from "../../interfaces/GameTypes.js";
+import { ActionStats, Bindings } from "../../interfaces/PlayerTypes.js";
 import Game from "../Game.js";
 import Entity from "./Entity.js";
 
@@ -12,6 +12,9 @@ abstract class Action extends Entity
     private shots:           Bullet[]
     private reload_timer:    number | undefined
     private godmode:         boolean
+    private flat_bindings:   string[]
+    private keys:            KeysInput
+    private bindings:        Bindings
 
     protected weapon:       Maybe<Weapon>
     protected weapon_def:   Maybe<Weapon>
@@ -25,7 +28,7 @@ abstract class Action extends Entity
     protected max_armor:  number
     protected armor_prot: number
 
-    protected last_dir:   ShootDirection
+    protected last_dir:      ShootDirection
     
 
 
@@ -104,16 +107,35 @@ abstract class Action extends Entity
 
         const obj: Entity = new Entity(x, this.y, 40, 40, {image: img})
 
-        this.shots.push({obj, dir, dirX: 1, dirY: 0, type: 'flamestream', flameObj: {
-            affected: [],
-            dmg_cooldown: 100
-        }})
+        this.shots.push({obj, dir, dirX: 1, dirY: 0, type: 'flamestream', flame_affected: []})
     }
 
     private weapon_copy(weapon: Maybe<Weapon>): Maybe<Weapon>
     {
         return weapon ? { ...weapon, stats: {...weapon.stats} } : null
     }
+
+
+    protected checkBinding(action: string): boolean 
+    {
+        return this.keys.activeKeys.some(x => this.bindings[action]?.keys.includes(x))
+    }
+
+    protected isKeyPressed(key?: string): boolean
+    {
+        return key ? this.keys.activeKeys.includes(key) : !!this.keys.activeKeys.length
+    }
+
+    protected getBindings(): Bindings
+    {
+        return this.bindings
+    }
+
+    protected hasShotBullet(type: string): boolean
+    {
+        return this.shots.findIndex(x => x.type === type) !== -1
+    }
+
 
 
     protected constructor(x: number, y: number, w: number, h: number, args?: Maybe<ActionArgs>)
@@ -137,6 +159,38 @@ abstract class Action extends Entity
         this.weapon          = this.weapon_copy(args?.weapon)
         this.weapon_def      = this.weapon_copy(args?.weapon)
         this.weapon_saved    = this.weapon_copy(args?.weapon)
+
+        this.keys = {
+            activeKeys: []
+        }
+
+        this.bindings      = args?.bindings ?? {}
+        this.flat_bindings = Object.values(this.bindings).map(x => x.keys).flat()
+    }
+
+
+
+    public addBinding(action: string, keys: string[], fn: VoidFn): void
+    {
+        this.bindings[action] = { keys, fn }
+        this.flat_bindings    = Object.values(this.bindings).map(x => x.keys).flat()
+    }
+
+
+    public addKey(key: string): void
+    {
+        if (!this.flat_bindings.includes(key) || this.keys.activeKeys.includes(key))
+            return
+
+        this.keys.activeKeys.push(key)
+    }
+
+
+    public removeKey(key: string): void
+    {
+        const i: number = this.keys.activeKeys.indexOf(key)
+
+        i !== -1 && this.keys.activeKeys.splice(i, 1)
     }
 
 
@@ -198,31 +252,31 @@ abstract class Action extends Entity
             if (!timeout)
                 b.explosionObj.timeout = Game.addTimer(() => this.removeBullet(b.obj, true), 200)
         }
-        // else if (b.type === 'flamestream')
-        // {
-        //     const gun:   FlameWeapon = this.weapon!.stats as FlameWeapon,
-        //             new_w: number      = w - gun.flamestep
+        else if (b.type === 'flamestream')
+        {
+            const gun:   FlameWeapon = this.weapon!.stats as FlameWeapon,
+                  new_w: number      = w - gun.flamestep
 
-        //     let leftshrink: number = 0                  
+            let leftshrink: number = 0                  
 
-        //     if (!this.checkBinding('player_shoot') || !this.weapon?.stats.mag_ammo) // <-- checkBinding for universal
-        //     {
-        //         leftshrink = gun.flamestep
+            if (!this.checkBinding('entity_shoot') || !this.weapon?.stats.mag_ammo)
+            {
+                leftshrink = gun.flamestep
 
-        //         b.obj.setSize(new_w)
+                b.obj.setSize(new_w)
 
-        //         if (new_w <= gun.flamestep)
-        //         {
-        //             this.removeBullet(b.obj)
-        //             this.gameobj?.stop_audio('/data/weapons/sounds/fire.wav')
-        //         }
-        //     }
+                if (new_w <= gun.flamestep)
+                {
+                    this.removeBullet(b.obj)
+                    this.gameobj?.stop_audio('/data/weapons/sounds/fire.wav')
+                }
+            }
 
-        //     if (b.dir === -1)
-        //         b.obj.setPosition(this.x - new_w - gun.flamestep - 2 + leftshrink , this.y)
-        //     else
-        //         b.obj.setPosition(this.x + this.w + 2, this.y)
-        // }
+            if (b.dir === -1)
+                b.obj.setPosition(this.x - new_w - gun.flamestep - 2 + leftshrink , this.y)
+            else
+                b.obj.setPosition(this.x + this.w + 2, this.y)
+        }
         else
         {
             b.obj.setPosition(
@@ -365,22 +419,22 @@ abstract class Action extends Entity
             
             bullet.explosionObj.affected.push(target.id)
         }
-        else if (bullet?.type === 'flamestream' && bullet.flameObj)
+        else if (bullet?.type === 'flamestream' && bullet.flame_affected && this.weapon?.type === 'flamethrower')
         {
-            if (bullet.flameObj.affected.includes(target.id))
+            if (bullet.flame_affected.includes(target.id))
                 return returnObj
 
-            bullet.flameObj.affected.push(target.id)
+            bullet.flame_affected.push(target.id)
 
             Game.addTimer(() => {
-                if (!bullet.flameObj) return
+                if (!bullet.flame_affected) return
 
-                const i: number = bullet.flameObj.affected.findIndex(x => x === target.id)
+                const i: number = bullet.flame_affected.findIndex(x => x === target.id)
 
                 if (i !== -1)
-                    bullet.flameObj?.affected.splice(i, 1)
+                    bullet.flame_affected.splice(i, 1)
                 
-            }, bullet.flameObj.dmg_cooldown);
+            }, (this.weapon.stats as FlameWeapon).dmg_cooldown);
         }
 
 

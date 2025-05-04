@@ -71,7 +71,8 @@ class WeaponItem extends Entity
                 stats = { 
                     bullet_dmg: 5, shoot_cd: 0, bullet_speed: 4, max_ammo: 400,
                     mag_ammo: 200, total_ammo: 0, reload_time: 2500,
-                    maxflame: 300, flamestep: 20, angle: 0
+                    maxflame: 300, flamestep: 20, angle: 0,
+                    dmg_cooldown: 100
                 }
 
                 super(x, y, 60, 60, {image})

@@ -12,8 +12,7 @@ export type VoidFn = () => void
 export type Fn<T = void> = () => T
 
 export type KeysInput = {
-    pressed: boolean
-    pressedKeys: string[]
+    activeKeys: string[]
 }
 
 export type CollisionValues = 'top' | 'right' | 'bottom' | 'left' | null
